@@ -623,18 +623,20 @@ body.fullcam.lens-view .fs-view {
 }
 body.fullcam.lens-view .fs-view > .camera { position: absolute; margin: 0; }
 body.fullcam.lens-view:not(.v) .fs-view > .camera {
-  /* sideways: as tall as the screen, from the left edge; cut off where the controls start */
+  /* sideways: as tall as the screen, running past the left edge by the notch's depth so the
+     phone's real notch sits on the body; cut off where the controls start */
   width: calc(100cqh * 58 / 24.5);
-  left: 0;
+  left: calc(-5.4 * var(--mm, 6.25px));
   top: 50%;
   transform: translateY(-50%);
 }
 body.fullcam.lens-view.v .fs-view { margin: calc(-1 * (var(--pt) + 10px)) calc(-1 * (var(--pr) + 10px)) 0 calc(-1 * (var(--pl) + 10px)); }
 body.fullcam.lens-view.v .fs-view > .camera {
-  /* upright: the whole camera, fitted to the screen width, hanging from the top edge */
+  /* upright: fitted to the screen width, its top running past the screen edge by the notch's
+     depth, so the phone's real notch and selfie camera look like part of the camera */
   width: 100cqw;
   left: 50%;
-  top: 0;
+  top: calc(-5.4 * var(--mm, 6.25px));
   transform: translateX(-50%);
 }
 body.fullcam .f-notch { --m: var(--mm, 6.25px); } /* real millimetres, whatever the body's size */
