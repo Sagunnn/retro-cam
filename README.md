@@ -61,8 +61,9 @@ CNAME           custom domain for GitHub Pages
 - **Wide**: rear camera → the phone's ultra-wide (0.5×) lens, found by its name (iPhone: "Back Ultra
   Wide Camera"). Selfie camera, or phones without a separate ultra-wide → zooms the camera out as far
   as the browser allows. The LCD shows REAR 0.5× / SELFIE WIDE, or NO WIDE if neither is possible.
-- **Lens** (appears with the selfie camera): the camera turns round to show its front (lens,
-  viewfinder window, flash window, rainbow band), so you don't see yourself, just like holding the
+- **Lens** (appears with the selfie camera): the camera turns round to show its front (viewfinder
+  window, flash window, rainbow band, and the iPhone's own notch hardware: front camera, Face ID
+  sensors and speaker, drawn life-size and lined up with the real notch), so you don't see yourself, just like holding the
   real thing. Tap the camera's front or a capture button to shoot; it turns back to show the photo
   for the 5-second review, then back to the lens. The flash window glows red while recording. In Lens view the drawn lens follows
   the phone's real selfie camera: upright, the camera is centred near the top with its lens in the
