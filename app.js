@@ -1540,8 +1540,10 @@
   function updateHud() {
     const f = FILTERS[state.filter];
     el.hudFilter.textContent = state.hq ? `${f.name} HQ` : f.name;
-    el.hqBtn.setAttribute('aria-pressed', String(state.hq));
-    el.hqBtn.setAttribute('aria-label', state.hq ? 'High quality on (tap for vintage)' : 'Vintage quality (tap for high quality)');
+    document.querySelectorAll('.hq-toggle').forEach((b) => {
+      b.setAttribute('aria-pressed', String(state.hq));
+      b.setAttribute('aria-label', state.hq ? 'High quality on (tap for vintage)' : 'Vintage quality (tap for high quality)');
+    });
     el.hudFlash.toggleAttribute('hidden', !state.flash);
     el.hudFacing.textContent = state.facing === 'user'
       ? (state.wideActive ? 'SELFIE WIDE' : 'SELFIE')
@@ -1680,7 +1682,7 @@
       if (state.recording) stopRecording();
       if (state.running) startCamera();
     }));
-    el.hqBtn.addEventListener('click', () => {
+    document.querySelectorAll('.hq-toggle').forEach((btn) => btn.addEventListener('click', () => {
       press();
       state.hq = !state.hq;
       store.set('hq', state.hq);
@@ -1688,7 +1690,7 @@
       lcdMsg(state.hq ? 'HQ' : 'VINTAGE');
       if (state.recording) stopRecording();
       if (state.running) startCamera(); // ask the camera for the matching resolution
-    });
+    }));
     el.lcd.addEventListener('pointerdown', () => { audio(); });
     document.querySelectorAll('.flip-btn').forEach((b) => b.addEventListener('click', flipCamera));
     el.flashBtn.addEventListener('click', () => {

@@ -603,7 +603,33 @@ body.v .full-row { gap: 22px; }
 }
 .fs-side { display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 12px; }
 .fs-exit { width: 40px; height: 40px; }
-.fs-top { display: flex; gap: 8px; }
+.fs-top { display: grid; grid-template-columns: repeat(2, 40px); gap: 8px; } /* exit, Lens, layout, flip */
+.fs-top .hq-toggle span { font: 800 12px/1 var(--mono); }
+.fs-top .wide-btn span { font: 800 11px/1 var(--mono); letter-spacing: -0.04em; }
+.fs-top .layout-btn[aria-pressed] { color: #e9e9ea; } /* a switch, not an on/off light */
+.fs-top .hq-toggle[aria-pressed='true'] { color: #ffd23a; }
+.fs-exit.layout-btn svg { width: 52%; height: 52%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.fs-side > .big-mode { width: 46px; height: 46px; }
+.fs-top .big-mode { width: 40px; height: 40px; }
+.fs-side .alt-shutter { width: 70px; height: 70px; }
+/* sideways: capture on the far right, half way down; the other controls in a column beside it */
+body:not(.v) .fs-side {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    'top    cap'
+    'play   cap'
+    'arrows cap';
+  column-gap: 16px;
+  align-items: center;
+  justify-items: center;
+}
+body:not(.v) .fs-top { grid-area: top; }
+body:not(.v) #fsPlay { grid-area: play; }
+body:not(.v) .fs-side .arrow-pair { grid-area: arrows; }
+body:not(.v) #shutterF { grid-area: cap; width: 78px; height: 78px; }
+.fs-side .arrow-btn { width: 40px; height: 40px; }
 .fs-top .lens-btn svg { width: 54%; height: 54%; }
 /* full-screen camera + selfie + Lens: show the turned camera (its front) instead of the live picture */
 .fs-view > .camera { display: none; }
@@ -645,7 +671,7 @@ body.fullcam.v .fs-view > .lcd { align-self: start; }
 .fs-exit.flip-btn svg { width: 52%; height: 52%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 /* phone upright (vertical layout): controls along the bottom instead */
 body.v .fscam { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
-body.v .fs-top { flex-direction: column; }
+
 body.v .fs-side { flex-direction: row; justify-content: space-around; }
 body.v .fs-side .arrow-pair { flex-direction: row; }
 body.v .below { margin-top: auto; }
