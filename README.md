@@ -26,18 +26,20 @@ CNAME           custom domain for GitHub Pages
 
 ## Using it
 
-- **Hold it either way.** It's always the same horizontal camera. With the phone upright it spans
-  the screen width, with a big capture button and a video-mode button underneath. Photos and
-  videos always come out wide (1792×896 photo area, 640×320 video), matching the screen.
-- **Light** next to the viewfinder: green in photo mode, red in video mode, blinking while recording.
-- **Shutter:** the big red button (on the body when horizontal, below the camera when upright), or tap
-  the screen. Each shot goes straight
-  into the film roll, so you can keep shooting. Space/Enter works on a computer, and so do Bluetooth
-  selfie remotes. iPhone Safari doesn't let websites use the volume buttons.
+- **Hold it either way.** Sideways it's the whole camera. Upright, the screen-and-buttons part of the
+  camera fills the width (the left end runs off the screen), with ▶ and the video button underneath.
+  Photos and videos always come out wide (1792×896 photo area, 640×320 video), matching the screen.
+- **Light** under the viewfinder: green in photo mode, red in video mode, blinking while recording.
+  The red dot on the top-edge button lights up in video mode too.
+- **Shutter:** the big red button on the body, or tap the screen. After a shot it stays on the
+  screen for 5 seconds; press the shutter again (or tap the screen) to go straight back to the
+  live view. Every shot is kept in the film roll. Space/Enter works on a computer, and so do
+  Bluetooth selfie remotes. iPhone Safari doesn't let websites use the volume buttons.
 - **▲ / ▼** change the look: Y2K, Warm, CCD, B&W. You can also swipe across the screen.
-- **▶** (under the viewfinder) opens the film roll. Tap shots to select them (or **Select all**),
-  then **Save to Photos**. On iPhone that opens the share sheet; choose *Save Images* / *Save Video*.
-  On a computer the files download. **Delete** removes the selected shots from the roll.
+- **▶ Playback:** shows your newest shot on the camera's screen; **▼** goes to older shots, **▲** to
+  newer ones (or swipe). **Save** puts the shot on screen into Photos (share sheet → *Save Image*);
+  **All** opens the film roll, where you tap shots to select several and save or delete them
+  together. Press ▶ or the shutter to go back to shooting.
 - **Video:** the small button with the red dot on the top edge (the camera button below it when
   upright) switches between photo and video.
   In video mode the shutter starts and stops recording (lo-fi 640×320, 24 fps, with sound, up to

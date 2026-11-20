@@ -18,7 +18,7 @@
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 
-  <link rel="stylesheet" href="styles.css?v=f3c3b4b1dd">
+  <link rel="stylesheet" href="styles.css?v=53d49a6ea5">
 </head>
 <body data-color="yellow">
   <video id="video" playsinline muted autoplay aria-hidden="true"></video>
@@ -47,6 +47,14 @@
               <span class="hud-tc" id="hudRec" hidden><i></i><span id="hudRecText">STBY</span></span>
               <span class="hud-msg" id="hudMsg"></span>
             </div>
+            <!-- playback on the camera's screen: 5 s review after a shot, or browsing with ▶ -->
+            <div class="pb" id="pb" hidden>
+              <img id="pbImg" alt="">
+              <video id="pbVid" playsinline loop muted hidden></video>
+              <span class="pb-tag" id="pbTag"></span>
+              <button class="pb-chip pb-all" id="pbAll">All</button>
+              <button class="pb-chip pb-save" id="pbSave">Save</button>
+            </div>
             <div class="lcd-state" id="lcdState" hidden><span id="stateTitle">ON</span></div>
             <div class="lcd-glass" aria-hidden="true"></div>
           </div>
@@ -63,9 +71,9 @@
       </div>
       </div>
 
-      <!-- upright phone: the camera is turned on its side, so capture + video mode sit below it -->
+      <!-- upright phone: the camera's left side runs off-screen, so playback + video mode sit below -->
       <div class="below">
-        <button class="big-shutter" id="shutter2" aria-label="Take photo"><span></span></button>
+        <button class="big-mode" id="rollBtn2" aria-label="Playback"><svg class="fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg></button>
         <button class="big-mode" id="modeBtn2" aria-label="Video mode" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="13" height="11" rx="2"/><path d="m15.5 10.5 6-3.5v10l-6-3.5z"/></svg></button>
       </div>
 
@@ -147,6 +155,6 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <script src="app.js?v=d8768ecf49" defer></script>
+  <script src="app.js?v=89b5f2131d" defer></script>
 </body>
 </html>

@@ -16,7 +16,8 @@
     filterPrev: $('filterPrev'), filterNext: $('filterNext'),
     muteBtn: $('muteBtn'), installBtn: $('installBtn'), iosTip: $('iosTip'), iosTipClose: $('iosTipClose'),
     screenFlash: $('screenFlash'),
-    modeBtn: $('modeBtn'), shutter2: $('shutter2'), modeBtn2: $('modeBtn2'), hudRec: $('hudRec'), hudRecText: $('hudRecText'), led: $('led'),
+    modeBtn: $('modeBtn'), rollBtn2: $('rollBtn2'), modeBtn2: $('modeBtn2'),
+    pb: $('pb'), pbImg: $('pbImg'), pbVid: $('pbVid'), pbTag: $('pbTag'), pbAll: $('pbAll'), pbSave: $('pbSave'), hudRec: $('hudRec'), hudRecText: $('hudRecText'), led: $('led'),
     downloadLink: $('downloadLink'),
     rollSheet: $('rollSheet'), rollGrid: $('rollGrid'), rollCount: $('rollCount'), rollEmpty: $('rollEmpty'),
     closeRollBtn: $('closeRollBtn'), selectAllBtn: $('selectAllBtn'),
@@ -621,10 +622,11 @@
     state.shots += 1;
     updateHud();
     refreshRollThumb(rec);
-    lcdMsg('→ ROLL');
+    startReview(rec);
   }
 
   function setMode(mode) {
+    if (screen.mode !== 'live') hideLcdShow();
     if (state.recording) stopRecording();
     state.mode = mode;
     store.set('mode', mode);
@@ -885,6 +887,8 @@
   }
 
   async function shoot() {
+    if (screen.mode === 'review') { endReview(); return; } // capture again = back to live
+    if (screen.mode === 'play') { exitPlay(); return; }
     if (state.busy) return;
     if (state.mode === 'video' && state.running) {
       if (state.recording) stopRecording(); else startRecording();
@@ -931,8 +935,7 @@
       state.shots += 1;
       updateHud();
       refreshRollThumb(shot);
-      state.paused = false;
-      lcdMsg('→ ROLL');
+      startReview(shot);
     } catch (e) {
       console.error(e);
       state.paused = false;
@@ -974,7 +977,7 @@
       state.shots += 1;
       updateHud();
       refreshRollThumb(shot);
-      lcdMsg('→ ROLL');
+      startReview(shot);
     } catch (e) {
       console.error(e);
       toast('That photo couldn’t be opened.');
@@ -1115,19 +1118,21 @@
   }
 
   async function saveSelected() {
-    // Build the files synchronously so the share sheet still counts as a direct tap (iOS).
     const recs = rollList.filter((r) => selected.has(r.id));
+    if (await saveRecords(recs)) { selected.clear(); await renderRoll(); }
+  }
+  // Share sheet on phones (→ "Save Images"), downloads elsewhere. Returns true if shared.
+  async function saveRecords(recs) {
+    // Build the files synchronously so the share sheet still counts as a direct tap (iOS).
     const files = recs.map(toFile).filter(Boolean);
-    if (!files.length) return;
+    if (!files.length) return false;
     press();
     if (IS_MOBILE && navigator.share && navigator.canShare && navigator.canShare({ files })) {
       try {
         await navigator.share({ files });
-        selected.clear();
-        await renderRoll();
-        return;
+        return true;
       } catch (err) {
-        if (err && err.name === 'AbortError') return; // closed the share sheet
+        if (err && err.name === 'AbortError') return false; // closed the share sheet
         // otherwise fall back to downloading
       }
     }
@@ -1140,6 +1145,90 @@
       await sleep(300);
     }
     toast(files.length > 1 ? `${files.length} files downloaded.` : 'Downloaded.');
+    return false;
+  }
+
+  /* ------------------------------------------- the camera's screen: review + playback */
+  // screen.mode: 'live' | 'review' (5 s after a shot) | 'play' (browsing with ▶ and ▲▼)
+  const screen = { mode: 'live', url: null, timer: 0, list: [], index: 0 };
+  const REVIEW_MS = 5000;
+
+  function showOnLcd(rec, tag) {
+    if (screen.url) URL.revokeObjectURL(screen.url);
+    screen.url = URL.createObjectURL(rec.blob);
+    const isVideo = rec.kind === 'video';
+    el.pbImg.hidden = isVideo;
+    el.pbVid.hidden = !isVideo;
+    if (isVideo) {
+      el.pbImg.removeAttribute('src');
+      el.pbVid.src = screen.url;
+      el.pbVid.play().catch(() => {});
+    } else {
+      el.pbVid.pause();
+      el.pbVid.removeAttribute('src');
+      el.pbImg.src = screen.url;
+    }
+    el.pbTag.textContent = tag || '';
+    el.pb.hidden = false;
+    state.paused = true;
+  }
+  function hideLcdShow() {
+    clearTimeout(screen.timer);
+    el.pb.hidden = true;
+    el.pb.classList.remove('review');
+    el.pbVid.pause();
+    el.pbVid.removeAttribute('src');
+    el.pbImg.removeAttribute('src');
+    if (screen.url) { URL.revokeObjectURL(screen.url); screen.url = null; }
+    screen.mode = 'live';
+    screen.list = [];
+    if (el.rollSheet.hidden) state.paused = false;
+    updateHud();
+  }
+
+  function startReview(rec) {
+    if (screen.mode === 'play') hideLcdShow();
+    screen.mode = 'review';
+    el.pb.classList.add('review');
+    showOnLcd(rec, '');
+    clearTimeout(screen.timer);
+    screen.timer = setTimeout(endReview, REVIEW_MS);
+  }
+  function endReview() {
+    if (screen.mode !== 'review') return;
+    hideLcdShow();
+  }
+
+  async function enterPlay() {
+    if (state.recording) stopRecording();
+    if (screen.mode === 'review') hideLcdShow();
+    const list = await roll.all(); // newest first
+    if (!list.length) { lcdMsg('NO SHOTS'); return; }
+    screen.mode = 'play';
+    screen.list = list;
+    screen.index = 0;
+    el.pb.classList.remove('review');
+    showPlay();
+    updateHud();
+  }
+  function showPlay() {
+    const rec = screen.list[screen.index];
+    showOnLcd(rec, `▶ ${screen.index + 1}/${screen.list.length}`);
+  }
+  // +1 = older, -1 = newer
+  function playStep(d) {
+    const i = screen.index + d;
+    if (i < 0 || i >= screen.list.length) { lcdMsg(i < 0 ? 'NEWEST' : 'OLDEST', 600); return; }
+    screen.index = i;
+    showPlay();
+  }
+  function exitPlay() {
+    if (screen.mode !== 'play') return;
+    hideLcdShow();
+  }
+  function togglePlay() {
+    press();
+    if (screen.mode === 'play') exitPlay(); else enterPlay();
   }
 
   async function deleteSelected() {
@@ -1154,6 +1243,7 @@
 
   async function openRoll() {
     press();
+    if (screen.mode !== 'live') hideLcdShow();
     if (state.recording) stopRecording();
     state.paused = true;
     selected.clear();
@@ -1185,8 +1275,7 @@
     el.hudRec.classList.toggle('rec', state.recording);
     if (!state.recording) el.hudRecText.textContent = 'STBY';
     el.shutterBtn.classList.toggle('recording', state.recording);
-    el.shutter2.classList.toggle('recording', state.recording);
-    el.shutter2.setAttribute('aria-label', video ? (state.recording ? 'Stop recording' : 'Start recording') : 'Take photo');
+    el.rollBtn2.dataset.on = String(screen.mode === 'play');
     el.modeBtn2.setAttribute('aria-pressed', String(video));
     el.modeBtn2.setAttribute('aria-label', video ? 'Video mode on' : 'Video mode off');
     el.shutterBtn.setAttribute('aria-label', video ? (state.recording ? 'Stop recording' : 'Start recording') : 'Take photo');
@@ -1273,8 +1362,6 @@
   function bind() {
     el.shutterBtn.addEventListener('click', shoot);
     el.shutterBtn.addEventListener('pointerdown', () => { audio(); });
-    el.shutter2.addEventListener('click', shoot);
-    el.shutter2.addEventListener('pointerdown', () => { audio(); });
     el.lcd.addEventListener('pointerdown', () => { audio(); });
     el.flipBtn.addEventListener('click', flipCamera);
     el.flashBtn.addEventListener('click', () => {
@@ -1298,8 +1385,9 @@
       updateHud();
       lcdMsg(FRAME_LABEL[state.frame]);
     });
-    el.filterPrev.addEventListener('click', () => { press(); setFilter(state.filter - 1); });
-    el.filterNext.addEventListener('click', () => { press(); setFilter(state.filter + 1); });
+    // ▲ / ▼: change the look, or (in playback) go to a newer / older shot
+    el.filterPrev.addEventListener('click', () => { press(); if (screen.mode === 'play') playStep(-1); else setFilter(state.filter - 1); });
+    el.filterNext.addEventListener('click', () => { press(); if (screen.mode === 'play') playStep(1); else setFilter(state.filter + 1); });
     el.muteBtn.addEventListener('click', () => {
       state.muted = !state.muted;
       store.set('muted', state.muted);
@@ -1311,7 +1399,18 @@
       b.addEventListener('click', () => { press(); setColor(b.dataset.setColor, true); });
     });
 
-    el.rollBtn.addEventListener('click', openRoll);
+    el.rollBtn.addEventListener('click', togglePlay);
+    el.rollBtn2.addEventListener('click', togglePlay);
+    el.pbAll.addEventListener('click', (e) => { e.stopPropagation(); exitPlay(); openRoll(); });
+    el.pbSave.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const rec = screen.list[screen.index];
+      if (rec) saveRecords([rec]);
+    });
+    ['pointerup', 'pointerdown'].forEach((t) => {
+      el.pbAll.addEventListener(t, (e) => e.stopPropagation());
+      el.pbSave.addEventListener(t, (e) => e.stopPropagation());
+    });
     el.closeRollBtn.addEventListener('click', () => { press(); closeRoll(); });
     el.rollSheet.addEventListener('click', (e) => { if (e.target === el.rollSheet) closeRoll(); });
     el.selectAllBtn.addEventListener('click', () => {
@@ -1338,10 +1437,17 @@
       if (sx === null) return;
       const dx = e.clientX - sx, dy = e.clientY - sy;
       sx = null;
-      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5 && state.running) {
+      const swipe = Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5;
+      const tap = Math.abs(dx) < 10 && Math.abs(dy) < 10;
+      if (screen.mode === 'play') {
+        if (swipe) { press(); playStep(dx < 0 ? 1 : -1); } // swipe left = older
+        else if (tap && !el.pbVid.hidden) el.pbVid.muted = !el.pbVid.muted;
+      } else if (screen.mode === 'review') {
+        if (tap) endReview();
+      } else if (swipe && state.running) {
         press();
         setFilter(state.filter + (dx < 0 ? 1 : -1));
-      } else if (Math.abs(dx) < 10 && Math.abs(dy) < 10 && el.lcdState.hidden) {
+      } else if (tap && el.lcdState.hidden) {
         shoot();
       }
     });
@@ -1363,8 +1469,8 @@
       if (!el.rollSheet.hidden) return;
       const onButton = e.target instanceof HTMLElement && e.target.closest('button, a, input, label');
       if ((e.key === ' ' || e.key === 'Enter') && !onButton) { e.preventDefault(); shoot(); }
-      else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') setFilter(state.filter - 1);
-      else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') setFilter(state.filter + 1);
+      else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { if (screen.mode === 'play') playStep(-1); else setFilter(state.filter - 1); }
+      else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { if (screen.mode === 'play') playStep(1); else setFilter(state.filter + 1); }
     });
 
     // Release the camera in the background; pick it back up on return.
