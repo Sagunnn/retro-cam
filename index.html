@@ -18,7 +18,7 @@
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 
-  <link rel="stylesheet" href="styles.css?v=dd74ab279a">
+  <link rel="stylesheet" href="styles.css?v=922e520a8c">
 </head>
 <body data-color="yellow">
 
@@ -91,7 +91,7 @@
       </div>
 
       <!-- full-screen photos, outside the camera (vertical layout: just under it) -->
-      <div class="full-row"><button class="big-mode full-btn" aria-label="Full screen photos" data-label="Full"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M10 20H4v-6M20 4l-6.5 6.5M4 20l6.5-6.5"/></svg></button></div>
+      <div class="full-row"><button class="big-mode fscam-btn" aria-label="Full-screen camera" data-label="Camera"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V5h4M16 5h4v4M20 15v4h-4M8 19H4v-4"/><circle cx="12" cy="12" r="2.6"/></svg></button><button class="big-mode full-btn" aria-label="Full screen photos" data-label="Full"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M10 20H4v-6M20 4l-6.5 6.5M4 20l6.5-6.5"/></svg></button></div>
 
       <!-- vertical layout: the camera's left side runs off-screen, so playback + video mode sit below -->
       <div class="below">
@@ -117,6 +117,7 @@
         <button class="tg layout-btn" aria-pressed="false" aria-label="Vertical layout"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M3.5 9.5a8.5 8.5 0 0 1 2-4m15 9a8.5 8.5 0 0 1-2 4"/><path d="m3 6 2.5-.5L6 8m15 10-2.5.5L18 16"/></svg></button>
       </div>
       <div class="side side-l">
+        <button class="big-mode fscam-btn" aria-label="Full-screen camera" data-label="Camera"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V5h4M16 5h4v4M20 15v4h-4M8 19H4v-4"/><circle cx="12" cy="12" r="2.6"/></svg></button>
         <button class="big-mode full-btn" aria-label="Full screen photos" data-label="Full"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M10 20H4v-6M20 4l-6.5 6.5M4 20l6.5-6.5"/></svg></button>
         <button class="big-mode wide-btn" aria-pressed="false" aria-label="Wide lens" data-label="Wide"><span>0.5×</span></button>
         <button class="big-mode lens-btn" aria-pressed="false" aria-label="Lens view" data-label="Lens"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3.5"/><circle cx="10.6" cy="10.6" r="1" fill="currentColor"/></svg></button>
@@ -176,6 +177,20 @@
       </div>
     </main>
 
+    <!-- full-screen camera: the live picture big on the left, Play / arrows / capture on the right -->
+    <div class="fscam" id="fscam" hidden>
+      <div class="fs-view" id="fsView"></div>
+      <div class="fs-side">
+        <button class="big-mode fs-exit" id="fsExit" aria-label="Leave full-screen camera"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M15 20v-5h5M9 20v-5H4"/></svg></button>
+        <button class="big-mode" id="fsPlay" aria-label="Playback"><svg class="fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg></button>
+        <div class="arrow-pair">
+          <button class="arrow-btn" data-step="-1" aria-label="Up"><svg class="fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7.5 6.5 15.5h11z"/></svg></button>
+          <button class="arrow-btn" data-step="1" aria-label="Down"><svg class="fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16.5 6.5 8.5h11z"/></svg></button>
+        </div>
+        <button class="alt-shutter" id="shutterF" aria-label="Take photo"><span></span></button>
+      </div>
+    </div>
+
     <div class="screen-flash" id="screenFlash" aria-hidden="true"></div>
 
     <a id="downloadLink" download hidden></a>
@@ -220,6 +235,6 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <script src="app.js?v=a157b4a1d1" defer></script>
+  <script src="app.js?v=1b56504931" defer></script>
 </body>
 </html>

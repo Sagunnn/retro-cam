@@ -681,8 +681,20 @@
       b.setAttribute('aria-label', vertical ? 'Vertical layout (tap for horizontal)' : 'Horizontal layout (tap for vertical)');
     });
   }
+  // full-screen camera: the LCD itself moves into the big view (and renders at twice the size)
+  let fullCam = false;
+  function setFullCam(on) {
+    fullCam = on;
+    const fs = $('fscam');
+    if (on) { $('fsView').appendChild(el.lcd); fs.hidden = false; }
+    else { document.querySelector('.bezel').appendChild(el.lcd); fs.hidden = true; }
+    document.body.classList.toggle('fullcam', on);
+    fitView();
+    resetWatchdog();
+    if (el.video.paused && el.video.srcObject) el.video.play().catch(() => {});
+  }
   function fitView() {
-    const w = 320, h = 160;
+    const w = fullCam ? 640 : 320, h = fullCam ? 320 : 160;
     if (el.view.width !== w || el.view.height !== h) { el.view.width = w; el.view.height = h; }
   }
 
@@ -1503,7 +1515,7 @@
       b.setAttribute('aria-label', state.lensOnly ? 'Lens view on (tap to see the screen)' : 'Lens view off (tap to see only the lens)');
     });
     $('rollBtn3').dataset.on = String(lcdShow.mode === 'play');
-    for (const b of [el.shutterV, el.shutterH]) {
+    for (const b of [el.shutterV, el.shutterH, $('shutterF')]) {
       b.classList.toggle('recording', state.recording);
       b.setAttribute('aria-label', video ? (state.recording ? 'Stop recording' : 'Start recording') : 'Take photo');
     }
@@ -1591,11 +1603,14 @@
 
   /* ------------------------------------------------------------- wiring */
   function bind() {
-    for (const b of [el.shutterBtn, el.shutterV, el.shutterH]) {
+    for (const b of [el.shutterBtn, el.shutterV, el.shutterH, $('shutterF')]) {
       b.addEventListener('click', shoot);
       b.addEventListener('pointerdown', () => { audio(); });
     }
     el.saveRollBtn.addEventListener('click', openRoll);
+    document.querySelectorAll('.fscam-btn').forEach((b) => b.addEventListener('click', () => { press(); setFullCam(true); }));
+    $('fsExit').addEventListener('click', () => { press(); setFullCam(false); });
+    $('fsPlay').addEventListener('click', togglePlay);
     document.querySelectorAll('.lens-btn').forEach((b) => b.addEventListener('click', () => {
       press();
       state.lensOnly = !state.lensOnly;
@@ -1748,6 +1763,7 @@
     el.lcd.addEventListener('pointercancel', () => { sx = null; });
 
     document.addEventListener('keydown', (e) => {
+      if (fullCam && e.key === 'Escape' && !viewer.open && el.rollSheet.hidden) { setFullCam(false); return; }
       if (viewer.open) {
         if (e.key === 'Escape') closeViewer();
         else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') el.viewerTrack.scrollBy({ left: el.viewerTrack.clientWidth, behavior: 'smooth' });

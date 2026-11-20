@@ -59,6 +59,9 @@ CNAME           custom domain for GitHub Pages
   upright) switches between photo and video.
   In video mode the shutter starts and stops recording (lo-fi 640×320, 24 fps, with sound, up to
   60 s). Video gets the same look and date stamp.
+- **Camera** (next to Full): full-screen camera mode. The live picture fills the screen on the left
+  (rendered at twice the size) with only Play, ▲ ▼ and a capture button on the right, plus a button
+  to leave. Review, playback and the arrows work as usual. Upright, the controls run along the bottom.
 - **Wide**: rear camera → the phone's ultra-wide (0.5×) lens, found by its name (iPhone: "Back Ultra
   Wide Camera"). Selfie camera → the front sensor's full 4:3 picture instead of the 16:9 crop (about a
   third wider side to side with the phone upright; Safari doesn't allow zooming the front camera below

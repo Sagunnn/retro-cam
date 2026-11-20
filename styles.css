@@ -568,7 +568,32 @@ body.v.selfie .cam-slot { align-self: center; margin: 4px 0 0; }
 /* Full (full-screen photos): in the empty space just under the camera, on the right */
 .full-row { display: none; }
 body.v .full-row { display: flex; align-self: stretch; justify-content: flex-end; margin: -8px 4px auto; padding-bottom: 18px; }
-.full-btn svg { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.full-btn svg, .fscam-btn svg, .fs-exit svg { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+body.v .full-row { gap: 22px; }
+
+/* full-screen camera: the camera's screen moved out big, controls in a column on the right */
+.fscam {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  padding: calc(var(--pt) + 10px) calc(var(--pr) + 14px) calc(var(--pb) + 10px) calc(var(--pl) + 10px);
+  background: #000;
+}
+.fs-view { position: relative; min-width: 0; min-height: 0; display: grid; place-items: center; container-type: size; }
+.fs-view .lcd {
+  width: min(100cqw, 200cqh);
+  border-radius: 10px;
+  box-shadow: 0 0 0 5px #121213, 0 0 0 6px #2a2a2c;
+}
+.fs-side { display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 12px; }
+.fs-exit { width: 40px; height: 40px; }
+/* phone upright (vertical layout): controls along the bottom instead */
+body.v .fscam { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+body.v .fs-side { flex-direction: row; justify-content: space-around; }
+body.v .fs-side .arrow-pair { flex-direction: row; }
 body.v .below { margin-top: auto; }
 body:not(.v) .dock { margin-top: auto; }
 /* Horizontal on a phone (held top-to-the-left): the iPhone's rear lens is ~12 mm in from that
