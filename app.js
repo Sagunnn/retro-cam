@@ -755,6 +755,14 @@
         const uw = await findUltraWide();
         if (uw) { delete video.facingMode; video.deviceId = { exact: uw }; state.wideActive = true; }
       }
+      // Wide selfie: the front camera has no wider lens and Safari won't zoom it below 1×, but its
+      // 16:9 picture is cut from the middle of a 4:3 sensor. Asking for 4:3 gets the full sensor,
+      // about a third wider side to side when the phone is upright.
+      if (state.wide && state.facing === 'user') {
+        video.width = { ideal: state.hq ? 4032 : 1920 };
+        video.height = { ideal: state.hq ? 3024 : 1440 };
+        video.aspectRatio = { ideal: 4 / 3 };
+      }
       const get = (audio, v) => navigator.mediaDevices.getUserMedia({ audio, video: v });
       try {
         stream = await get(wantAudio, video);
@@ -787,7 +795,12 @@
       state.mirror = settings.facingMode ? settings.facingMode === 'user' : (state.facing === 'user' || !IS_MOBILE);
       const caps = (state.track.getCapabilities && state.track.getCapabilities()) || {};
       state.torch = !!caps.torch;
-      // Wide without a separate ultra-wide camera (e.g. the selfie camera): zoom out as far as allowed
+      // Wide selfie: did we get the full 4:3 sensor?
+      if (state.wide && state.facing === 'user') {
+        const w = settings.width || el.video.videoWidth, h = settings.height || el.video.videoHeight;
+        if (w && h && Math.max(w, h) / Math.min(w, h) < 1.5) state.wideActive = true;
+      }
+      // Still not wide: zoom out as far as the browser allows (some Android phones)
       if (state.wide && !state.wideActive) {
         const cur = (settings.zoom || 1);
         if (caps.zoom && caps.zoom.min < cur) {

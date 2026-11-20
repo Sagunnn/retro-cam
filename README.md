@@ -59,8 +59,10 @@ CNAME           custom domain for GitHub Pages
   In video mode the shutter starts and stops recording (lo-fi 640×320, 24 fps, with sound, up to
   60 s). Video gets the same look and date stamp.
 - **Wide**: rear camera → the phone's ultra-wide (0.5×) lens, found by its name (iPhone: "Back Ultra
-  Wide Camera"). Selfie camera, or phones without a separate ultra-wide → zooms the camera out as far
-  as the browser allows. The LCD shows REAR 0.5× / SELFIE WIDE, or NO WIDE if neither is possible.
+  Wide Camera"). Selfie camera → the front sensor's full 4:3 picture instead of the 16:9 crop (about a
+  third wider side to side with the phone upright; Safari doesn't allow zooming the front camera below
+  1×). Phones with neither fall back to zooming out as far as allowed. The LCD shows REAR 0.5× /
+  SELFIE WIDE, or NO WIDE.
 - **Lens** (appears with the selfie camera): the camera turns round to show its front (viewfinder
   window, flash window, rainbow band, and the iPhone's own notch hardware: front camera, Face ID
   sensors and speaker, drawn life-size and lined up with the real notch), so you don't see yourself, just like holding the
