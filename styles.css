@@ -1,4 +1,4 @@
-/* Retro Cam: a simple, long, horizontal keychain camera */
+/* Retro Cam: a simple, long keychain camera (horizontal, or vertical when the phone is upright) */
 
 :root {
   --page: #efe9dc;
@@ -69,7 +69,7 @@ button:focus-visible, .chip:focus-within { outline: 2px solid var(--ink); outlin
 svg { display: block; }
 #video { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
-/* ------------------------------------------------- always-landscape frame */
+/* ------------------------------------------------------------ frame */
 .app {
   position: fixed;
   top: 0;
@@ -80,25 +80,10 @@ svg { display: block; }
   overflow: hidden;
   background: var(--page);
   container-type: size;
-  /* padding for notches / home bar, in the app's own (landscape) directions */
   --pl: var(--safe-l);
   --pr: var(--safe-r);
   --pt: var(--safe-t);
   --pb: var(--safe-b);
-}
-/* Phone held upright: turn the whole app 90° so it's still a long, horizontal camera. */
-@media (orientation: portrait) and (pointer: coarse) {
-  .app {
-    width: 100vh;
-    width: 100dvh;
-    height: 100vw;
-    transform-origin: 0 0;
-    transform: rotate(90deg) translateY(-100%);
-    --pl: var(--safe-t);
-    --pr: var(--safe-b);
-    --pt: var(--safe-r);
-    --pb: var(--safe-l);
-  }
 }
 
 .stage {
@@ -115,73 +100,96 @@ svg { display: block; }
 /* ------------------------------------------------------------ camera */
 .camera {
   position: relative;
-  /* ~2.3 : 1 body; leave room for the shutter above and the dock below */
+  /* ~2.4 : 1 body; leave room for the mode button above and the dock below */
   width: min(100cqw - var(--pl) - var(--pr) - 32px, (100cqh - var(--pt) - var(--pb) - 92px) * 2.2, 980px);
   margin-top: 2.6%;
-  container-type: inline-size; /* everything inside is sized in % of the body width */
+  container-type: inline-size;
+  --u: 1cqw; /* body unit: 1% of the body's long side */
 }
 .shell {
   position: relative;
   display: grid;
-  grid-template-columns: 12cqw 1fr 12cqw;
-  gap: 3cqw;
-  padding: 4.4cqw 3.6cqw 4.4cqw 4.2cqw;
-  border-radius: 2.8cqw;
+  grid-template-columns: calc(12 * var(--u)) 1fr calc(12 * var(--u));
+  grid-template-rows: auto auto 1fr auto;
+  grid-template-areas:
+    'ovf  lcd pair'
+    'led  lcd pair'
+    '.    lcd .'
+    'roll lcd shut';
+  column-gap: calc(3 * var(--u));
+  padding: calc(4.4 * var(--u)) calc(3.6 * var(--u)) calc(4.4 * var(--u)) calc(4.2 * var(--u));
+  border-radius: calc(2.8 * var(--u));
   background:
     linear-gradient(180deg, var(--body-hi) 0%, var(--body) 12%, var(--body) 84%, var(--body-lo) 100%);
   box-shadow:
-    inset 0 0.4cqw 0 rgba(255, 255, 255, 0.45),
-    inset 0 -0.6cqw 0 rgba(0, 0, 0, 0.1),
-    0 1cqw 0 var(--body-edge),
-    0 4cqw 5cqw -2.5cqw rgba(60, 40, 0, 0.45);
+    inset 0 calc(0.4 * var(--u)) 0 rgba(255, 255, 255, 0.45),
+    inset 0 calc(-0.6 * var(--u)) 0 rgba(0, 0, 0, 0.1),
+    0 calc(1 * var(--u)) 0 var(--body-edge),
+    0 calc(4 * var(--u)) calc(5 * var(--u)) calc(-2.5 * var(--u)) rgba(60, 40, 0, 0.45);
   isolation: isolate;
 }
 .shell::before {
   /* inner moulding line */
   content: '';
   position: absolute;
-  inset: 1cqw;
-  border-radius: 1.9cqw;
-  border: 0.28cqw solid var(--rim);
+  inset: calc(1 * var(--u));
+  border-radius: calc(1.9 * var(--u));
+  border: calc(0.28 * var(--u)) solid var(--rim);
   pointer-events: none;
 }
 /* translucent: the board shows through */
 body[data-color='clear'] .shell {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.22) 16%, rgba(255, 255, 255, 0.26) 86%, rgba(160, 182, 194, 0.5)),
-    radial-gradient(circle at 9% 76%, transparent 0 3.6cqw, rgba(205, 60, 48, 0.75) 3.7cqw 4.2cqw, transparent 4.3cqw),
-    linear-gradient(90deg, transparent 17.2cqw, rgba(222, 176, 58, 0.85) 17.2cqw 20.4cqw, transparent 20.4cqw) 0 30% / 100% 44% no-repeat,
-    radial-gradient(circle at 91% 18%, #caa64c 0 0.6cqw, transparent 0.7cqw),
-    radial-gradient(circle at 86% 88%, #caa64c 0 0.6cqw, transparent 0.7cqw),
-    linear-gradient(90deg, transparent 49%, rgba(214, 186, 96, 0.5) 49% 51%, transparent 51%) 0 0 / 7cqw 100%,
+    radial-gradient(circle at 9% 76%, transparent 0 calc(3.6 * var(--u)), rgba(205, 60, 48, 0.75) calc(3.7 * var(--u)) calc(4.2 * var(--u)), transparent calc(4.3 * var(--u))),
+    linear-gradient(90deg, transparent calc(17.2 * var(--u)), rgba(222, 176, 58, 0.85) calc(17.2 * var(--u)) calc(20.4 * var(--u)), transparent calc(20.4 * var(--u))) 0 30% / 100% 44% no-repeat,
+    radial-gradient(circle at 91% 18%, #caa64c 0 calc(0.6 * var(--u)), transparent calc(0.7 * var(--u))),
+    radial-gradient(circle at 86% 88%, #caa64c 0 calc(0.6 * var(--u)), transparent calc(0.7 * var(--u))),
+    linear-gradient(90deg, transparent 49%, rgba(214, 186, 96, 0.5) 49% 51%, transparent 51%) 0 0 / calc(7 * var(--u)) 100%,
     linear-gradient(180deg, #5f9a74, #46805c);
 }
 
-.left {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: flex-start;
-}
 .ovf {
-  margin-top: 0.4cqw;
+  grid-area: ovf;
+  align-self: start;
+  margin-top: calc(0.4 * var(--u));
   width: 78%;
   aspect-ratio: 2 / 1;
-  border-radius: 0.7cqw;
+  border-radius: calc(0.7 * var(--u));
   background: linear-gradient(160deg, #3d4046 0%, #141517 55%, #060607);
-  box-shadow: 0 0 0 0.45cqw #17171a, inset 0 0.3cqw 0.6cqw rgba(0, 0, 0, 0.9);
+  box-shadow: 0 0 0 calc(0.45 * var(--u)) #17171a, inset 0 calc(0.3 * var(--u)) calc(0.6 * var(--u)) rgba(0, 0, 0, 0.9);
 }
 
+.led {
+  /* status light: green = photo, red = video, blinking = recording */
+  grid-area: led;
+  align-self: start;
+  justify-self: start;
+  margin: calc(1.8 * var(--u)) 0 0 calc(0.6 * var(--u));
+  width: calc(1.5 * var(--u));
+  height: calc(1.5 * var(--u));
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #b9ffcf, #2fd36a 55%, #138a3c);
+  box-shadow: 0 0 calc(1 * var(--u)) rgba(60, 230, 120, 0.8), inset 0 calc(-0.15 * var(--u)) calc(0.2 * var(--u)) rgba(0, 0, 0, 0.3);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.led.video {
+  background: radial-gradient(circle at 40% 35%, #ffc4bc, #ff3b2b 55%, #a8160c);
+  box-shadow: 0 0 calc(1 * var(--u)) rgba(255, 60, 40, 0.85), inset 0 calc(-0.15 * var(--u)) calc(0.2 * var(--u)) rgba(0, 0, 0, 0.3);
+}
+.led.rec { animation: recblink 1s steps(2) infinite; }
 .bezel {
-  padding: 2.1cqw 2.6cqw;
-  border-radius: 1.4cqw;
+  grid-area: lcd;
+  align-self: center;
+  padding: calc(2.1 * var(--u)) calc(2.6 * var(--u));
+  border-radius: calc(1.4 * var(--u));
   background: #101011;
-  box-shadow: inset 0 0.25cqw 0 rgba(255, 255, 255, 0.07), 0 0.25cqw 0 rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 calc(0.25 * var(--u)) 0 rgba(255, 255, 255, 0.07), 0 calc(0.25 * var(--u)) 0 rgba(0, 0, 0, 0.15);
 }
 .lcd {
   position: relative;
   aspect-ratio: 2 / 1;
-  border-radius: 0.3cqw;
+  border-radius: calc(0.3 * var(--u));
   overflow: hidden;
   background: #070908;
   container-type: inline-size;
@@ -271,95 +279,155 @@ body[data-color='clear'] .shell {
 @keyframes dots { 50% { opacity: 0.2; } }
 
 /* right-hand buttons */
-.right {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-}
 .pair {
+  grid-area: pair;
+  justify-self: center;
+  align-self: start;
   display: flex;
   flex-direction: column;
-  gap: 1.4cqw;
-  padding: 1.1cqw;
+  gap: calc(1.4 * var(--u));
+  padding: calc(1.1 * var(--u));
   border-radius: 99px;
-  box-shadow: inset 0 0 0 0.35cqw rgba(0, 0, 0, 0.16), 0 0.25cqw 0 rgba(255, 255, 255, 0.35);
+  box-shadow: inset 0 0 0 calc(0.35 * var(--u)) rgba(0, 0, 0, 0.16), 0 calc(0.25 * var(--u)) 0 rgba(255, 255, 255, 0.35);
 }
 .rb {
   position: relative;
-  width: 6.6cqw;
-  height: 6.6cqw;
+  width: calc(6.6 * var(--u));
+  height: calc(6.6 * var(--u));
   border-radius: 50%;
   display: grid;
   place-items: center;
   color: #e9e9ea;
   background: radial-gradient(circle at 50% 30%, #3e3f43, #18181a 70%);
-  box-shadow: 0 0.45cqw 0 #000, inset 0 0.2cqw 0 rgba(255, 255, 255, 0.14);
+  box-shadow: 0 calc(0.45 * var(--u)) 0 #000, inset 0 calc(0.2 * var(--u)) 0 rgba(255, 255, 255, 0.14);
   transition: transform 0.06s, box-shadow 0.06s;
 }
-.rb::after { content: ''; position: absolute; inset: -1cqw; } /* larger hit area */
-.rb:active { transform: translateY(0.35cqw); box-shadow: 0 0.1cqw 0 #000; }
+.rb::after { content: ''; position: absolute; inset: calc(-1 * var(--u)); } /* larger hit area */
+.rb:active { transform: translateY(calc(0.35 * var(--u))); box-shadow: 0 calc(0.1 * var(--u)) 0 #000; }
 .rb svg { width: 52%; height: 52%; fill: currentColor; }
-.rb.play { width: 7.4cqw; height: 7.4cqw; margin-left: 1cqw; }
+.rb.play { grid-area: roll; align-self: end; justify-self: start; width: calc(7.4 * var(--u)); height: calc(7.4 * var(--u)); margin-left: calc(1 * var(--u)); }
 
 /* mode (photo / video) button on the top edge */
 .mode {
+  grid-area: mode;
   position: absolute;
-  top: -1.6cqw;
-  right: 19cqw;
-  width: 6cqw;
-  height: 3cqw;
-  border-radius: 1cqw 1cqw 0 0;
+  z-index: -1;
+  top: calc(-1.6 * var(--u));
+  right: calc(19 * var(--u));
+  width: calc(6 * var(--u));
+  height: calc(2.2 * var(--u));
+  border-radius: calc(1 * var(--u)) calc(1 * var(--u)) 0 0;
   background: linear-gradient(180deg, #6b6d72, #3a3b3f 60%, #2a2b2e);
-  box-shadow: inset 0 0.25cqw 0 rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 calc(0.25 * var(--u)) 0 rgba(255, 255, 255, 0.3);
   transition: transform 0.06s;
 }
 .mode i {
   position: absolute;
   left: 50%;
-  top: 0.55cqw;
-  width: 1cqw;
-  height: 1cqw;
-  margin-left: -0.5cqw;
+  top: calc(0.55 * var(--u));
+  width: calc(1 * var(--u));
+  height: calc(1 * var(--u));
+  margin-left: calc(-0.5 * var(--u));
   border-radius: 50%;
   background: #8a2a22;
 }
-.mode[aria-pressed='true'] i { background: #ff4a3a; box-shadow: 0 0 0.8cqw #ff4a3a; }
+.mode svg { display: none; }
+.mode[aria-pressed='true'] i { background: #ff4a3a; box-shadow: 0 0 calc(0.8 * var(--u)) #ff4a3a; }
 .mode::after { content: ''; position: absolute; inset: -14px -8px -4px; }
-.mode:active { transform: translateY(0.8cqw); }
+.mode:active { transform: translateY(calc(0.8 * var(--u))); }
 /* big shutter, bottom right: where the right thumb rests */
 .shutter {
+  grid-area: shut;
+  align-self: end;
+  justify-self: center;
   position: relative;
-  width: 12.4cqw;
-  height: 12.4cqw;
-  margin-left: -2.4cqw;
+  width: calc(12.4 * var(--u));
+  height: calc(12.4 * var(--u));
+  margin-left: calc(-2.4 * var(--u));
   border-radius: 50%;
   display: grid;
   place-items: center;
   background: radial-gradient(circle at 50% 30%, #f4f5f7, #b9bdc3 55%, #8d9298);
-  box-shadow: 0 0.5cqw 0 rgba(0, 0, 0, 0.35), 0 1.2cqw 2cqw -0.6cqw rgba(0, 0, 0, 0.4), inset 0 -0.3cqw 0.4cqw rgba(0, 0, 0, 0.25);
+  box-shadow: 0 calc(0.5 * var(--u)) 0 rgba(0, 0, 0, 0.35), 0 calc(1.2 * var(--u)) calc(2 * var(--u)) calc(-0.6 * var(--u)) rgba(0, 0, 0, 0.4), inset 0 calc(-0.3 * var(--u)) calc(0.4 * var(--u)) rgba(0, 0, 0, 0.25);
   transition: transform 0.06s, box-shadow 0.06s;
 }
-.shutter::after { content: ''; position: absolute; inset: -1.6cqw; border-radius: 50%; } /* bigger hit area */
+.shutter::after { content: ''; position: absolute; inset: calc(-1.6 * var(--u)); border-radius: 50%; } /* bigger hit area */
 .shutter span {
   width: 76%;
   height: 76%;
   border-radius: 50%;
   background: radial-gradient(circle at 45% 32%, #ff7a6c 0%, #e2352a 45%, #a61e15 100%);
-  box-shadow: inset 0 0.3cqw 0.4cqw rgba(255, 255, 255, 0.35), inset 0 -0.4cqw 0.6cqw rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 calc(0.3 * var(--u)) calc(0.4 * var(--u)) rgba(255, 255, 255, 0.35), inset 0 calc(-0.4 * var(--u)) calc(0.6 * var(--u)) rgba(0, 0, 0, 0.3);
   transition: border-radius 0.2s, width 0.2s, height 0.2s;
 }
-.shutter:active, .shutter.pressed { transform: translateY(0.45cqw); box-shadow: 0 0.1cqw 0 rgba(0, 0, 0, 0.35), inset 0 -0.3cqw 0.4cqw rgba(0, 0, 0, 0.25); }
+.shutter:active, .shutter.pressed { transform: translateY(calc(0.45 * var(--u))); box-shadow: 0 calc(0.1 * var(--u)) 0 rgba(0, 0, 0, 0.35), inset 0 calc(-0.3 * var(--u)) calc(0.4 * var(--u)) rgba(0, 0, 0, 0.25); }
 .shutter:disabled { cursor: default; }
 /* recording: the red dome becomes a rounded "stop" square */
 .shutter.recording span { width: 46%; height: 46%; border-radius: 18%; animation: recblink 1s steps(2) infinite; }
+
+/* ------------------------------------------------- vertical camera */
+@media (orientation: portrait) {
+  .camera {
+    /* body ~1 : 2.45; the dock sits underneath */
+    width: min(100cqw - var(--pl) - var(--pr) - 32px, (100cqh - var(--pt) - var(--pb) - 150px) / 2.5, 440px);
+    margin-top: 0;
+    --u: 2.4cqw; /* same unit as landscape: 1% of the long side */
+  }
+  .shell {
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-rows: auto auto auto auto;
+    grid-template-areas:
+      'ovf  ovf  led'
+      'lcd  lcd  lcd'
+      'pair shut mode'
+      'pair shut roll';
+    column-gap: calc(2 * var(--u));
+    padding: calc(3.6 * var(--u)) calc(3.6 * var(--u)) calc(4 * var(--u));
+  }
+  .ovf { width: calc(11 * var(--u)); margin: 0 0 calc(2.6 * var(--u)) calc(0.4 * var(--u)); justify-self: start; }
+  .led { justify-self: end; margin: calc(1.2 * var(--u)) calc(1 * var(--u)) 0 0; }
+  .bezel { padding: calc(2.4 * var(--u)) calc(2.1 * var(--u)); margin-bottom: calc(3.2 * var(--u)); }
+  .lcd { aspect-ratio: 1 / 2; }
+  .lcd .hud { font-size: 7cqw; }
+  .hud-tc { top: 12%; } /* REC timer under the top row on the narrow screen */
+  .lcd-state { font-size: 11cqw; }
+  .pair { justify-self: start; align-self: center; }
+  .shutter { align-self: center; margin: 0; }
+  .rb.play { justify-self: end; align-self: end; margin: 0 calc(0.4 * var(--u)) 0 0; }
+  /* the mode button joins the controls at the bottom */
+  .mode {
+    position: relative;
+    z-index: auto;
+    top: auto;
+    right: auto;
+    justify-self: end;
+    align-self: start;
+    margin-right: calc(0.4 * var(--u));
+    width: calc(7.4 * var(--u));
+    height: calc(7.4 * var(--u));
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: #e9e9ea;
+    background: radial-gradient(circle at 50% 30%, #3e3f43, #18181a 70%);
+    box-shadow: 0 calc(0.45 * var(--u)) 0 #000, inset 0 calc(0.2 * var(--u)) 0 rgba(255, 255, 255, 0.14);
+  }
+  .mode i { display: none; }
+  .mode svg { display: block; width: 52%; height: 52%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+  .mode[aria-pressed='true'] { color: #ff5a4a; }
+  .mode:active { transform: translateY(calc(0.35 * var(--u))); box-shadow: 0 calc(0.1 * var(--u)) 0 #000; }
+  .mode::after { inset: calc(-1 * var(--u)); }
+
+  .dock { flex-wrap: wrap; row-gap: 14px; max-width: 100%; }
+  .roll-grid { grid-template-columns: repeat(3, 1fr); }
+}
 
 /* ------------------------------------------------------------- dock */
 .dock {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: 14px 24px;
 }
 .toggles { display: flex; gap: 10px; }
 .tg {

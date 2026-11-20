@@ -16,7 +16,7 @@
     filterPrev: $('filterPrev'), filterNext: $('filterNext'),
     muteBtn: $('muteBtn'), installBtn: $('installBtn'), iosTip: $('iosTip'), iosTipClose: $('iosTipClose'),
     screenFlash: $('screenFlash'),
-    modeBtn: $('modeBtn'), hudRec: $('hudRec'), hudRecText: $('hudRecText'),
+    modeBtn: $('modeBtn'), hudRec: $('hudRec'), hudRecText: $('hudRecText'), led: $('led'),
     downloadLink: $('downloadLink'),
     rollSheet: $('rollSheet'), rollGrid: $('rollGrid'), rollCount: $('rollCount'), rollEmpty: $('rollEmpty'),
     closeRollBtn: $('closeRollBtn'), selectAllBtn: $('selectAllBtn'),
@@ -28,8 +28,10 @@
   const IS_IOS = /iPad|iPhone|iPod/.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints > 1);
   const IS_MOBILE = IS_IOS || /Android|Mobi/i.test(UA) || !!(navigator.userAgentData && navigator.userAgentData.mobile);
   const STANDALONE = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-  // Same query as the CSS that turns the app sideways on a phone held upright.
-  const UI_ROTATED = matchMedia('(orientation: portrait) and (pointer: coarse)');
+  // Phone held upright → vertical camera (same query as the CSS). Photos, video and the LCD
+  // all follow: 2:1 when horizontal, 1:2 when vertical.
+  const VERTICAL = matchMedia('(orientation: portrait)');
+  const shape = (long, short) => (VERTICAL.matches ? [short, long] : [long, short]);
 
   /* ------------------------------------------------------------ settings */
   const store = {
@@ -52,16 +54,16 @@
     // the default look: hazy, washed-out early-2000s digicam (lifted shadows, blown soft highlights)
     { id: 'y2k', name: 'Y2K', exposure: 1.1, sat: 0.94, contrast: 0.8, lift: 0.075, roll: 0.97,
       gain: [1.03, 1.0, 0.98], shadow: [8, 2, 12], high: [8, 6, 0],
-      noise: 9, chroma: 6, bloom: 0.5, vignette: 0.14, ca: 2 },
+      noise: 3, chroma: 2.5, bloom: 0.5, vignette: 0.14, ca: 2 },
     { id: 'warm', name: 'WARM', exposure: 1.06, sat: 0.84, contrast: 0.82, lift: 0.1, roll: 0.95,
       gain: [1.09, 1.0, 0.85], shadow: [20, 8, -4], high: [12, 6, -14],
-      noise: 10, chroma: 5, bloom: 0.45, vignette: 0.3, ca: 2 },
+      noise: 3.5, chroma: 2, bloom: 0.45, vignette: 0.3, ca: 2 },
     { id: 'ccd', name: 'CCD', exposure: 1.04, sat: 1.12, contrast: 0.98, lift: 0.04, roll: 0.985,
       gain: [0.94, 1.0, 1.08], shadow: [-4, 6, 18], high: [-6, 4, 12],
-      noise: 9, chroma: 8, bloom: 0.55, vignette: 0.18, ca: 3 },
+      noise: 3, chroma: 3, bloom: 0.55, vignette: 0.18, ca: 3 },
     { id: 'bw', name: 'B&W', bw: true, exposure: 1.05, sat: 0, contrast: 1.2, lift: 0.05, roll: 0.97,
       gain: [1, 1, 1], shadow: [0, 0, 0], high: [0, 0, 0],
-      noise: 16, chroma: 0, bloom: 0.3, vignette: 0.3, ca: 0 },
+      noise: 6, chroma: 0, bloom: 0.3, vignette: 0.3, ca: 0 },
   ];
 
   const FRAMES = ['none', 'film', 'instant', 'round'];
@@ -325,10 +327,6 @@
     ctx.drawImage(src, (-srcW * scale) / 2, (-srcH * scale) / 2, srcW * scale, srcH * scale);
     ctx.restore();
   }
-  // How far to turn portrait camera frames when the app is shown sideways (phone top to the left):
-  // the back camera's world-up is on the frame's right (turn -90°); the selfie camera's raw frame
-  // is mirrored relative to that, so its world-up is on the left (turn +90°). 0 = no turn.
-  const needsTurn = (w, h) => (UI_ROTATED.matches && h > w ? (state.mirror ? 1 : -1) : 0);
 
   /* ----- seven-segment red-orange date stamp */
   const SEGMENTS = {
@@ -379,8 +377,8 @@
   }
   // Date inside the picture (used when the film border is off).
   function drawDateStamp(ctx, rect, text) {
-    const H = Math.max(6, rect.h * 0.06);
-    drawSegText(ctx, text, rect.x + rect.w * 0.955, rect.y + rect.h * 0.935, H);
+    const m = Math.min(rect.w, rect.h);
+    drawSegText(ctx, text, rect.x + rect.w - m * 0.09, rect.y + rect.h - m * 0.065, Math.max(6, m * 0.06));
   }
 
   function roundRect(ctx, x, y, w, h, r) {
@@ -395,6 +393,7 @@
 
   /* ----- film border: built AROUND the photo, date printed in the bottom band */
   function filmBorder(photo, frameNo, date) {
+    if (photo.height > photo.width) return filmBorderTall(photo, frameNo, date);
     const pw = photo.width, ph = photo.height;
     const side = Math.round(pw * 0.045);
     const band = Math.round(pw * 0.118);
@@ -446,10 +445,66 @@
     return c;
   }
 
+  function filmBase(ctx, W, H) {
+    const g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, '#2a2119');
+    g.addColorStop(0.5, '#221a13');
+    g.addColorStop(1, '#2b2017');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+  }
+  function filmTall(frameNo) {
+    const n = ((frameNo - 1) % 36) + 1;
+    return { n, prev: n === 1 ? '00' : String(n - 1) };
+  }
+  // Vertical shot: the strip runs top-to-bottom (sprocket holes down both sides);
+  // the edge print and the date sit upright in the top and bottom margins.
+  function filmBorderTall(photo, frameNo, date) {
+    const pw = photo.width, ph = photo.height;
+    const band = Math.round(ph * 0.118);   // side bands, same size as the landscape bands
+    const margin = Math.round(band * 0.5); // top / bottom print margins
+    const W = pw + band * 2, H = ph + margin * 2;
+    const c = makeCanvas(W, H);
+    const ctx = c.getContext('2d');
+    filmBase(ctx, W, H);
+    ctx.save();
+    ctx.beginPath();
+    roundRect(ctx, band, margin, pw, ph, ph * 0.012);
+    ctx.clip();
+    ctx.drawImage(photo, band, margin);
+    ctx.restore();
+    const hh = H * 0.046, hw = band * 0.44, step = H / 14;
+    ctx.fillStyle = '#060504';
+    ctx.beginPath();
+    for (let i = 0; i < 14; i++) {
+      const y = step * i + (step - hh) / 2;
+      roundRect(ctx, (band - hw) / 2, y, hw, hh, hh * 0.18);
+      roundRect(ctx, W - band + (band - hw) / 2, y, hw, hh, hh * 0.18);
+    }
+    ctx.fill();
+    const fs = Math.round(band * 0.26);
+    ctx.fillStyle = '#f0b03c';
+    ctx.textBaseline = 'middle';
+    ctx.font = `800 ${fs}px "Arial Narrow", "Helvetica Neue", Arial, sans-serif`;
+    const { n, prev } = filmTall(frameNo);
+    const tY = margin * 0.52, bY = H - margin * 0.52;
+    const left = band * 0.55, right = W - band * 0.55;
+    ctx.textAlign = 'left';
+    ctx.fillText('RETRO', left, tY);
+    ctx.fillText(`${prev}A`, left, bY);
+    ctx.textAlign = 'center';
+    ctx.fillText(String(n), W * 0.5, tY);
+    ctx.textAlign = 'right';
+    ctx.fillText('CAM', right, tY);
+    if (date) drawSegText(ctx, date, right, bY + fs * 0.5, fs * 1.05);
+    return c;
+  }
+
   /* ----- overlay frames (drawn over the photo edges; returns the visible photo area) */
   function drawFrame(ctx, w, h, frame) {
     if (frame === 'instant') {
-      const sx = w * 0.035, top = h * 0.07, bottom = h * 0.17;
+      const m = Math.min(w, h);
+      const sx = m * 0.07, top = m * 0.07, bottom = m * 0.17;
       const r = { x: sx, y: top, w: w - sx * 2, h: h - top - bottom };
       ctx.save();
       ctx.beginPath();
@@ -467,7 +522,8 @@
       return r;
     }
     if (frame === 'round') {
-      const inset = h * 0.03, rad = h * 0.09;
+      const m = Math.min(w, h);
+      const inset = m * 0.03, rad = m * 0.09;
       const r = { x: inset, y: inset, w: w - inset * 2, h: h - inset * 2 };
       ctx.save();
       ctx.beginPath();
@@ -485,7 +541,7 @@
   function develop(canvas, ctx, opts) {
     const f = FILTERS[opts.filter];
     const w = canvas.width, h = canvas.height;
-    processPixels(ctx, w, h, f, w / 1792);
+    processPixels(ctx, w, h, f, Math.max(w, h) / 1792);
     bloom(canvas, ctx, f.bloom);
     if (opts.frame === 'film') return; // film border + date are added around the saved photo
     const rect = drawFrame(ctx, w, h, opts.frame);
@@ -505,14 +561,15 @@
     const v = el.video;
     if (v.readyState < 2 || !v.videoWidth) return;
     lastFrame = now;
-    const turn = needsTurn(v.videoWidth, v.videoHeight);
+    const turn = 0;
     if (state.recording) {
       // develop the recording frame once, then show it on the LCD
-      drawCover(recCtx, REC_W, REC_H, v, v.videoWidth, v.videoHeight, state.mirror, turn);
+      const rw = recCanvas.width, rh = recCanvas.height;
+      drawCover(recCtx, rw, rh, v, v.videoWidth, v.videoHeight, state.mirror, turn);
       const f = FILTERS[state.filter];
-      processPixels(recCtx, REC_W, REC_H, f, REC_W / 1792);
+      processPixels(recCtx, rw, rh, f, Math.max(rw, rh) / 1792);
       bloom(recCanvas, recCtx, f.bloom);
-      if (state.date) drawDateStamp(recCtx, { x: 0, y: 0, w: REC_W, h: REC_H }, dateString());
+      if (state.date) drawDateStamp(recCtx, { x: 0, y: 0, w: rw, h: rh }, dateString());
       viewCtx.drawImage(recCanvas, 0, 0, el.view.width, el.view.height);
       updateRecClock();
       return;
@@ -526,8 +583,9 @@
 
   /* ------------------------------------------------------------- video */
   // Lo-fi video like a 2000s digicam: 640×320, 24 fps, same colour/grain as photos.
-  const REC_W = 640, REC_H = 320, REC_FPS = 24, REC_MAX_S = 60;
-  const recCanvas = makeCanvas(REC_W, REC_H);
+  // 640×320 horizontal, 320×640 vertical
+  const REC_FPS = 24, REC_MAX_S = 60;
+  const recCanvas = makeCanvas(640, 320);
   const recCtx = ctx2d(recCanvas);
   let recStart = 0, recChunks = [], recMime = '', recTorch = false;
 
@@ -550,6 +608,7 @@
       toast('This browser can’t record video.');
       return;
     }
+    [recCanvas.width, recCanvas.height] = shape(640, 320);
     const stream = recCanvas.captureStream(REC_FPS);
     const audio = state.stream && state.stream.getAudioTracks()[0];
     if (audio) stream.addTrack(audio);
@@ -565,7 +624,7 @@
     rec.onstop = finishRecording;
     // first frame before the recorder starts, so the file never opens on black
     const v = el.video;
-    drawCover(recCtx, REC_W, REC_H, v, v.videoWidth, v.videoHeight, state.mirror, needsTurn(v.videoWidth, v.videoHeight));
+    drawCover(recCtx, recCanvas.width, recCanvas.height, v, v.videoWidth, v.videoHeight, state.mirror, 0);
     state.recorder = rec;
     state.recording = true;
     recStart = performance.now();
@@ -592,9 +651,9 @@
     state.recorder = null;
     if (!chunks.length) { toast('Nothing was recorded.'); return; }
     const blob = new Blob(chunks, { type: recMime.split(';')[0] });
-    const th = 192;
-    const t = makeCanvas(384, th);
-    t.getContext('2d').drawImage(recCanvas, 0, 0, 384, th);
+    const k = 384 / Math.max(recCanvas.width, recCanvas.height);
+    const t = makeCanvas(Math.round(recCanvas.width * k), Math.round(recCanvas.height * k));
+    t.getContext('2d').drawImage(recCanvas, 0, 0, t.width, t.height);
     const thumb = await canvasToBlob(t, 'image/jpeg', 0.75);
     state.frameNo += 1;
     store.set('frameNo', state.frameNo);
@@ -620,6 +679,10 @@
     if (state.running || state.error === 'busy' || state.error === 'error') startCamera();
   }
   function startLoop() { if (!rafId) rafId = requestAnimationFrame(loop); }
+  function fitView() {
+    const [w, h] = shape(320, 160);
+    if (el.view.width !== w || el.view.height !== h) { el.view.width = w; el.view.height = h; }
+  }
 
   /* ------------------------------------------------------------ camera */
   const STATES = {
@@ -758,11 +821,10 @@
   }
 
   /* ----------------------------------------------------------- capture */
-  const OUT_W = 1792, OUT_H = 896; // 1.6 MP, 2:1 (same shape as the LCD)
+  // Output: 1.6 MP in the LCD's shape: 1792×896 horizontal, 896×1792 vertical.
   // The "sensor": the picture is developed at ~0.3 MP and only then blown up to 1.6 MP,
   // the way cheap 2000s cameras interpolated a tiny sensor up to the number on the box.
-  const SENSOR_W = 768, SENSOR_H = 384;
-  const sensor = makeCanvas(SENSOR_W, SENSOR_H);
+  const sensor = makeCanvas(768, 384);
   const sensorCtx = ctx2d(sensor);
   const SHARPEN = 0.4;         // in-camera oversharpening → bright halos on edges
   const CRUNCH_QUALITY = 0.62; // in-camera JPEG → soft blocks and colour bleed
@@ -822,8 +884,13 @@
     // 1. tiny sensor: colour, grain and vignette happen at ~0.3 MP, so grain is blotchy once enlarged
     sensorCtx.imageSmoothingEnabled = true;
     sensorCtx.imageSmoothingQuality = 'high';
+    const [OUT_W, OUT_H] = shape(1792, 896);
+    const [SENSOR_W, SENSOR_H] = shape(768, 384);
+    if (sensor.width !== SENSOR_W || sensor.height !== SENSOR_H) { sensor.width = SENSOR_W; sensor.height = SENSOR_H; }
+    sensorCtx.imageSmoothingEnabled = true;
+    sensorCtx.imageSmoothingQuality = 'high';
     drawCover(sensorCtx, SENSOR_W, SENSOR_H, src, srcW, srcH, mirror, turn);
-    processPixels(sensorCtx, SENSOR_W, SENSOR_H, f, SENSOR_W / OUT_W);
+    processPixels(sensorCtx, SENSOR_W, SENSOR_H, f, 768 / 1792);
     // 2. the camera's own sharpening and 3. its JPEG engine
     sharpen(sensorCtx, SENSOR_W, SENSOR_H, SHARPEN);
     const crunched = await decodeImage(await canvasToBlob(sensor, 'image/jpeg', CRUNCH_QUALITY));
@@ -851,11 +918,11 @@
       date: state.date, n: state.frameNo,
     };
     const blob = await canvasToBlob(final, 'image/jpeg', SAVE_QUALITY);
-    const th = Math.round((384 * final.height) / final.width);
-    const t = makeCanvas(384, th);
+    const k = 384 / Math.max(final.width, final.height);
+    const t = makeCanvas(Math.round(final.width * k), Math.round(final.height * k));
     const tctx = t.getContext('2d');
     tctx.imageSmoothingQuality = 'high';
-    tctx.drawImage(final, 0, 0, 384, th);
+    tctx.drawImage(final, 0, 0, t.width, t.height);
     const thumb = await canvasToBlob(t, 'image/jpeg', 0.75);
     out.width = out.height = 1; // free memory early (iOS canvas limits)
     final.width = final.height = 1;
@@ -902,7 +969,7 @@
       void el.blink.offsetWidth;
       el.blink.classList.add('go');
       state.paused = true;
-      const shot = await developPhoto(grab, grab.width, grab.height, state.mirror, needsTurn(grab.width, grab.height));
+      const shot = await developPhoto(grab, grab.width, grab.height, state.mirror, 0);
       grab.width = grab.height = 1;
       const id = await roll.add(shot);
       shot.id = id;
@@ -1157,6 +1224,8 @@
     el.hudCount.textContent = pad(Math.min(999, state.shots), 3);
     const video = state.mode === 'video';
     el.modeBtn.setAttribute('aria-pressed', String(video));
+    el.modeBtn.setAttribute('aria-label', video ? 'Video mode on' : 'Video mode off');
+    el.led.className = 'led' + (video ? ' video' : '') + (state.recording ? ' rec' : '');
     el.hudRec.hidden = !video;
     el.hudRec.classList.toggle('rec', state.recording);
     if (!state.recording) el.hudRecText.textContent = 'STBY';
@@ -1305,9 +1374,8 @@
     el.lcd.addEventListener('pointerdown', (e) => { sx = e.clientX; sy = e.clientY; });
     el.lcd.addEventListener('pointerup', (e) => {
       if (sx === null) return;
-      let dx = e.clientX - sx, dy = e.clientY - sy;
+      const dx = e.clientX - sx, dy = e.clientY - sy;
       sx = null;
-      if (UI_ROTATED.matches) [dx, dy] = [dy, -dx];
       if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5 && state.running) {
         press();
         setFilter(state.filter + (dx < 0 ? 1 : -1));
@@ -1354,6 +1422,10 @@
 
   /* --------------------------------------------------------------- boot */
   function boot() {
+    fitView();
+    const onTurn = () => { if (state.recording) stopRecording(); fitView(); };
+    if (VERTICAL.addEventListener) VERTICAL.addEventListener('change', onTurn);
+    else if (VERTICAL.addListener) VERTICAL.addListener(onTurn);
     setColor(state.color, false);
     updateHud();
     bind();

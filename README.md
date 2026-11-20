@@ -26,14 +26,19 @@ CNAME           custom domain for GitHub Pages
 
 ## Using it
 
-- **Shutter:** the big red button at the bottom right, or tap the screen. Each shot goes straight
+- **Hold it either way.** Turned sideways it's the long horizontal camera; held upright it becomes a
+  vertical camera with the same proportions, controls along the bottom. Photos and videos follow
+  the screen: 1792×896 / 640×320 horizontal, 896×1792 / 320×640 vertical.
+- **Light** next to the viewfinder: green in photo mode, red in video mode, blinking while recording.
+- **Shutter:** the big red button (bottom right, or bottom centre when vertical), or tap the screen. Each shot goes straight
   into the film roll, so you can keep shooting. Space/Enter works on a computer, and so do Bluetooth
   selfie remotes. iPhone Safari doesn't let websites use the volume buttons.
 - **▲ / ▼** change the look: Y2K, Warm, CCD, B&W. You can also swipe across the screen.
 - **▶** (under the viewfinder) opens the film roll. Tap shots to select them (or **Select all**),
   then **Save to Photos**. On iPhone that opens the share sheet; choose *Save Images* / *Save Video*.
   On a computer the files download. **Delete** removes the selected shots from the roll.
-- **Video:** the small button with the red dot on the top edge switches between photo and video.
+- **Video:** the small button with the red dot on the top edge (the camera button at the bottom when
+  vertical) switches between photo and video.
   In video mode the shutter starts and stops recording (lo-fi 640×320, 24 fps, with sound, up to
   60 s). Video gets the same look and date stamp.
 - Row under the camera: switch camera, flash, date stamp, frame (film border by default, then none /

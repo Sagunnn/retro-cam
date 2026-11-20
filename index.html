@@ -18,7 +18,7 @@
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 
-  <link rel="stylesheet" href="styles.css?v=7af2913a63">
+  <link rel="stylesheet" href="styles.css?v=5ffc7edb5e">
 </head>
 <body data-color="yellow">
   <video id="video" playsinline muted autoplay aria-hidden="true"></video>
@@ -28,12 +28,9 @@
     <main class="stage">
       <!-- the camera, back view -->
       <div class="camera" id="camera">
-        <button class="mode" id="modeBtn" aria-label="Photo / video mode" aria-pressed="false"><i></i></button>
         <div class="shell">
-        <div class="left">
-          <div class="ovf" aria-hidden="true"></div>
-          <button class="rb play" id="rollBtn" aria-label="Film roll"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5v11l9-5.5z"/></svg></button>
-        </div>
+        <div class="ovf" aria-hidden="true"></div>
+        <span class="led" id="led" aria-hidden="true"></span>
 
         <div class="bezel">
           <div class="lcd" id="lcd">
@@ -54,13 +51,13 @@
           </div>
         </div>
 
-        <div class="right">
           <div class="pair">
             <button class="rb" id="filterPrev" aria-label="Previous filter"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7.5 6.5 15.5h11z"/></svg></button>
             <button class="rb" id="filterNext" aria-label="Next filter"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16.5 6.5 8.5h11z"/></svg></button>
           </div>
           <button class="shutter" id="shutterBtn" aria-label="Take photo"><span></span></button>
-        </div>
+          <button class="rb play" id="rollBtn" aria-label="Film roll"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5v11l9-5.5z"/></svg></button>
+          <button class="mode" id="modeBtn" aria-label="Video mode" aria-pressed="false"><i></i><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="13" height="11" rx="2"/><path d="m15.5 10.5 6-3.5v10l-6-3.5z"/></svg></button>
         </div>
       </div>
 
@@ -142,6 +139,6 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <script src="app.js?v=bef1f69a84" defer></script>
+  <script src="app.js?v=22cf8b823b" defer></script>
 </body>
 </html>
