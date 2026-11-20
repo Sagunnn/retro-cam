@@ -605,7 +605,7 @@ body.v .below {
   z-index: 5;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 body:not(.v) .side { display: flex; }
 .side-r { right: calc(var(--pr) + 22px); top: 50%; transform: translateY(-50%); }
@@ -640,6 +640,8 @@ body:not(.v) .side { display: flex; }
 .below #shutterV { grid-area: cap; }
 .below #modeBtn2 { grid-area: video; }
 .below .arrow-pair { grid-area: arrows; }
+/* flip camera + layout sit in the option row in vertical mode, beside the capture button in horizontal */
+body:not(.v) .dock .v-only { display: none; }
 .big-mode {
   position: relative;
   width: 52px;
@@ -673,13 +675,13 @@ body:not(.v) .side { display: flex; }
 /* ------------------------------------------------------------- dock */
 .dock {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column; /* options, then the colour dots underneath */
   align-items: center;
-  justify-content: center;
-  gap: 14px 24px;
+  gap: 14px;
   max-width: 100%;
 }
-.toggles { display: flex; gap: 10px; }
+.dock-row { display: flex; align-items: center; justify-content: center; gap: 24px; }
+.toggles { display: flex; gap: 6px; }
 .tg {
   width: 40px;
   height: 40px;
@@ -694,13 +696,14 @@ body:not(.v) .side { display: flex; }
 .tg:active { transform: scale(0.93); }
 .tg svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 .tg[aria-pressed='true'] { background: var(--ink); color: var(--page); }
+.tg-text span { font: 800 12px/1 var(--mono); letter-spacing: 0.02em; }
 #flashBtn[aria-pressed='true'] { color: #ffd23a; }
 #dateBtn[aria-pressed='true'] { color: var(--stamp); }
 #muteBtn .i-mute { display: none; }
 #muteBtn[aria-pressed='true'] { color: var(--ink-soft); }
 #muteBtn[aria-pressed='true'] .i-mute { display: block; }
 #muteBtn[aria-pressed='true'] .i-sound { display: none; }
-#flipBtn.single { opacity: 0.4; }
+.flip-btn.single { opacity: 0.4; }
 
 .colorways { display: flex; gap: 12px; }
 .swatch {

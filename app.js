@@ -11,12 +11,12 @@
     hudMsg: $('hudMsg'), battery: $('battery'),
     lcdState: $('lcdState'), stateTitle: $('stateTitle'), stateBody: $('stateBody'),
     retryBtn: $('retryBtn'), nativeBtn: $('nativeBtn'), nativeInput: $('nativeInput'),
-    flipBtn: $('flipBtn'), flashBtn: $('flashBtn'), dateBtn: $('dateBtn'), frameBtn: $('frameBtn'),
+    flashBtn: $('flashBtn'), hqBtn: $('hqBtn'), dateBtn: $('dateBtn'), frameBtn: $('frameBtn'),
     shutterBtn: $('shutterBtn'), rollBtn: $('rollBtn'),
     filterPrev: $('filterPrev'), filterNext: $('filterNext'),
     muteBtn: $('muteBtn'), installBtn: $('installBtn'), iosTip: $('iosTip'), iosTipClose: $('iosTipClose'),
     screenFlash: $('screenFlash'),
-    modeBtn: $('modeBtn'), rollBtn2: $('rollBtn2'), shutterV: $('shutterV'), shutterH: $('shutterH'), saveRollBtn: $('saveRollBtn'), modeBtn2: $('modeBtn2'), layoutBtn: $('layoutBtn'),
+    modeBtn: $('modeBtn'), rollBtn2: $('rollBtn2'), shutterV: $('shutterV'), shutterH: $('shutterH'), saveRollBtn: $('saveRollBtn'), modeBtn2: $('modeBtn2'),
     viewer: $('viewer'), viewerScreen: $('viewerScreen'), viewerTrack: $('viewerTrack'), viewerTag: $('viewerTag'),
     viewerClose: $('viewerClose'), viewerSave: $('viewerSave'), pbZoom: $('pbZoom'),
     pb: $('pb'), pbImg: $('pbImg'), pbVid: $('pbVid'), pbTag: $('pbTag'), pbAll: $('pbAll'), pbSave: $('pbSave'), hudRec: $('hudRec'), hudRecText: $('hudRecText'), led: $('led'),
@@ -82,6 +82,7 @@
     color: COLOR_NAMES[store.get('color', 'yellow')] ? store.get('color', 'yellow') : 'yellow',
     filter: Math.min(Math.max(0, store.get('filter', 0) | 0), FILTERS.length - 1),
     frame: FRAMES.includes(store.get('frame', 'film')) ? store.get('frame', 'film') : 'film',
+    hq: !!store.get('hq', false), // false = vintage (lo-fi 1.6 MP), true = high quality
     date: !!store.get('date', true),
     flash: !!store.get('flash', false),
     muted: !!store.get('muted', false),
@@ -499,8 +500,13 @@
   }
 
   // Live view: colour + grain + bloom; overlay frames; the date only when it lands in the picture.
+  // HQ keeps a look's colours but drops the cheap-camera damage (grain, colour noise, fringing).
+  function lookFor(i) {
+    const f = FILTERS[i];
+    return state.hq ? { ...f, id: f.id, noise: 0, chroma: 0, ca: 0, bloom: f.bloom * 0.6, vignette: f.vignette * 0.6 } : f;
+  }
   function develop(canvas, ctx, opts) {
-    const f = FILTERS[opts.filter];
+    const f = lookFor(opts.filter);
     const w = canvas.width, h = canvas.height;
     processPixels(ctx, w, h, f, Math.max(w, h) / 1792);
     bloom(canvas, ctx, f.bloom);
@@ -528,7 +534,7 @@
       // develop the recording frame once, then show it on the LCD
       const rw = recCanvas.width, rh = recCanvas.height;
       drawCover(recCtx, rw, rh, v, v.videoWidth, v.videoHeight, state.mirror, turn);
-      const f = FILTERS[state.filter];
+      const f = lookFor(state.filter);
       processPixels(recCtx, rw, rh, f, Math.max(rw, rh) / 1792);
       bloom(recCanvas, recCtx, f.bloom);
       if (state.date) drawDateStamp(recCtx, { x: 0, y: 0, w: rw, h: rh }, dateString());
@@ -573,13 +579,13 @@
       toast('This browser can’t record video.');
       return;
     }
-    [recCanvas.width, recCanvas.height] = shape(640, 320);
+    [recCanvas.width, recCanvas.height] = state.hq ? shape(960, 480) : shape(640, 320);
     const stream = recCanvas.captureStream(REC_FPS);
     const audio = state.stream && state.stream.getAudioTracks()[0];
     if (audio) stream.addTrack(audio);
     let rec;
     try {
-      rec = new MediaRecorder(stream, { ...(mime ? { mimeType: mime } : {}), videoBitsPerSecond: 2_000_000 });
+      rec = new MediaRecorder(stream, { ...(mime ? { mimeType: mime } : {}), videoBitsPerSecond: state.hq ? 5_000_000 : 2_000_000 });
     } catch {
       rec = new MediaRecorder(stream);
     }
@@ -668,8 +674,10 @@
   function setLayout(vertical) {
     document.body.classList.toggle('v', vertical);
     document.body.classList.toggle('flip', !vertical && VERTICAL.matches);
-    el.layoutBtn.setAttribute('aria-pressed', String(vertical));
-    el.layoutBtn.setAttribute('aria-label', vertical ? 'Vertical layout (tap for horizontal)' : 'Horizontal layout (tap for vertical)');
+    document.querySelectorAll('.layout-btn').forEach((b) => {
+      b.setAttribute('aria-pressed', String(vertical));
+      b.setAttribute('aria-label', vertical ? 'Vertical layout (tap for horizontal)' : 'Horizontal layout (tap for vertical)');
+    });
   }
   function fitView() {
     const w = 320, h = 160;
@@ -736,7 +744,9 @@
     try {
       let stream;
       const wantAudio = state.mode === 'video' && !state.noMic;
-      const video = { facingMode: { ideal: state.facing }, width: { ideal: 1920 }, height: { ideal: 1080 } };
+      const video = state.hq
+        ? { facingMode: { ideal: state.facing }, width: { ideal: 3840 }, height: { ideal: 2160 } }
+        : { facingMode: { ideal: state.facing }, width: { ideal: 1920 }, height: { ideal: 1080 } };
       const get = (audio, v) => navigator.mediaDevices.getUserMedia({ audio, video: v });
       try {
         stream = await get(wantAudio, video);
@@ -793,7 +803,7 @@
       const list = await navigator.mediaDevices.enumerateDevices();
       state.cameraCount = list.filter((d) => d.kind === 'videoinput').length || 1;
     } catch { state.cameraCount = 2; }
-    el.flipBtn.classList.toggle('single', state.cameraCount < 2);
+    document.querySelectorAll('.flip-btn').forEach((b) => b.classList.toggle('single', state.cameraCount < 2));
   }
 
   async function flipCamera() {
@@ -876,12 +886,34 @@
   }
 
   // Shared by live capture and the native-camera fallback.
+  // HQ: the largest 2:1 crop of the camera's own frame (up to 3840 wide), the look's colours,
+  // no grain or crunch.
+  function developHQ(src, srcW, srcH, mirror, turn) {
+    const f = lookFor(state.filter);
+    const effW = turn ? srcH : srcW, effH = turn ? srcW : srcH;
+    let W = Math.min(effW, effH * 2, 3840);
+    W = Math.max(2, Math.round(W / 2) * 2);
+    const H = W / 2;
+    const out = makeCanvas(W, H);
+    const octx = ctx2d(out);
+    octx.imageSmoothingEnabled = true;
+    octx.imageSmoothingQuality = 'high';
+    drawCover(octx, W, H, src, srcW, srcH, mirror, turn);
+    processPixels(octx, W, H, f, W / 1792);
+    bloom(out, octx, f.bloom);
+    return { out, octx, OUT_W: W, OUT_H: H };
+  }
+
   async function developPhoto(src, srcW, srcH, mirror, turn) {
     const f = FILTERS[state.filter];
+    let out, octx, OUT_W, OUT_H;
+    if (state.hq) {
+      ({ out, octx, OUT_W, OUT_H } = developHQ(src, srcW, srcH, mirror, turn));
+    } else {
     // 1. tiny sensor: colour, grain and vignette happen at ~0.3 MP, so grain is blotchy once enlarged
     sensorCtx.imageSmoothingEnabled = true;
     sensorCtx.imageSmoothingQuality = 'high';
-    const [OUT_W, OUT_H] = shape(1792, 896);
+    [OUT_W, OUT_H] = shape(1792, 896);
     const [SENSOR_W, SENSOR_H] = shape(768, 384);
     if (sensor.width !== SENSOR_W || sensor.height !== SENSOR_H) { sensor.width = SENSOR_W; sensor.height = SENSOR_H; }
     sensorCtx.imageSmoothingEnabled = true;
@@ -892,13 +924,14 @@
     sharpen(sensorCtx, SENSOR_W, SENSOR_H, SHARPEN);
     const crunched = await decodeImage(await canvasToBlob(sensor, 'image/jpeg', CRUNCH_QUALITY));
     // 4. interpolate up to 1.6 MP
-    const out = makeCanvas(OUT_W, OUT_H);
-    const octx = ctx2d(out);
+    out = makeCanvas(OUT_W, OUT_H);
+    octx = ctx2d(out);
     octx.imageSmoothingEnabled = true;
     octx.imageSmoothingQuality = 'medium';
     octx.drawImage(crunched, 0, 0, OUT_W, OUT_H);
     if (crunched.close) crunched.close();
     bloom(out, octx, f.bloom);
+    }
 
     state.frameNo += 1;
     store.set('frameNo', state.frameNo);
@@ -914,7 +947,7 @@
       created: when.getTime(), filter: f.name, frame: state.frame,
       date: state.date, n: state.frameNo,
     };
-    const blob = await canvasToBlob(final, 'image/jpeg', SAVE_QUALITY);
+    const blob = await canvasToBlob(final, 'image/jpeg', state.hq ? 0.92 : SAVE_QUALITY);
     const k = 384 / Math.max(final.width, final.height);
     const t = makeCanvas(Math.round(final.width * k), Math.round(final.height * k));
     const tctx = t.getContext('2d');
@@ -1398,7 +1431,9 @@
   /* ---------------------------------------------------------------- HUD */
   function updateHud() {
     const f = FILTERS[state.filter];
-    el.hudFilter.textContent = f.name;
+    el.hudFilter.textContent = state.hq ? `${f.name} HQ` : f.name;
+    el.hqBtn.setAttribute('aria-pressed', String(state.hq));
+    el.hqBtn.setAttribute('aria-label', state.hq ? 'High quality on (tap for vintage)' : 'Vintage quality (tap for high quality)');
     el.hudFlash.toggleAttribute('hidden', !state.flash);
     el.hudFacing.textContent = state.facing === 'user' ? 'SELFIE' : 'REAR';
     el.hudCount.textContent = pad(Math.min(999, state.shots), 3);
@@ -1505,8 +1540,17 @@
       b.addEventListener('pointerdown', () => { audio(); });
     }
     el.saveRollBtn.addEventListener('click', openRoll);
+    el.hqBtn.addEventListener('click', () => {
+      press();
+      state.hq = !state.hq;
+      store.set('hq', state.hq);
+      updateHud();
+      lcdMsg(state.hq ? 'HQ' : 'VINTAGE');
+      if (state.recording) stopRecording();
+      if (state.running) startCamera(); // ask the camera for the matching resolution
+    });
     el.lcd.addEventListener('pointerdown', () => { audio(); });
-    el.flipBtn.addEventListener('click', flipCamera);
+    document.querySelectorAll('.flip-btn').forEach((b) => b.addEventListener('click', flipCamera));
     el.flashBtn.addEventListener('click', () => {
       press();
       state.flash = !state.flash;
@@ -1590,12 +1634,12 @@
     el.saveSelBtn.addEventListener('click', saveSelected);
     el.deleteSelBtn.addEventListener('click', deleteSelected);
     el.modeBtn.addEventListener('click', () => { press(); setMode(state.mode === 'video' ? 'photo' : 'video'); });
-    el.layoutBtn.addEventListener('click', () => {
+    document.querySelectorAll('.layout-btn').forEach((b) => b.addEventListener('click', () => {
       press();
       const v = !document.body.classList.contains('v');
       setLayout(v);
       lcdMsg(v ? 'VERTICAL' : 'HORIZONTAL');
-    });
+    }));
     el.modeBtn2.addEventListener('click', () => { press(); setMode(state.mode === 'video' ? 'photo' : 'video'); });
 
     el.retryBtn.addEventListener('click', () => { press(); startCamera(); });

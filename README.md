@@ -58,8 +58,13 @@ CNAME           custom domain for GitHub Pages
   upright) switches between photo and video.
   In video mode the shutter starts and stops recording (lo-fi 640×320, 24 fps, with sound, up to
   60 s). Video gets the same look and date stamp.
-- Row under the camera: switch camera, flash, date stamp, frame (film border by default, then none /
-  instant / round), layout (horizontal / vertical), sound.
+- **HQ** (in the option row) switches from the vintage look to high quality: full camera resolution
+  (up to 3840×1920), the chosen look's colours without grain or JPEG crunch, saved at high quality.
+  Video goes to 960×480. Off by default.
+- Option row: sound, flash, date stamp, frame (film border by default, then none / instant / round),
+  HQ, save, and in vertical mode layout + flip camera. In horizontal mode flip camera sits above the
+  right-hand arrows and the layout toggle below the right-edge capture button. Colour dots are on
+  their own row underneath.
 - The coloured dots change the body: Yellow, Clear, Red, Blue, Black.
 
 ## Deploy on GitHub Pages (retro.sagunpradhan.com.np)
