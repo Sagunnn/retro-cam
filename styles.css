@@ -590,7 +590,7 @@ body.v .full-row { gap: 22px; }
   inset: 0;
   z-index: 40;
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 18px;
   padding: calc(var(--pt) + 10px) calc(var(--pr) + 14px) calc(var(--pb) + 10px) calc(var(--pl) + 10px);
   background: #000;
@@ -612,9 +612,38 @@ body.fullcam.lens-view .fs-view > .lcd { display: none; }
 /* …lined up with the phone's real selfie camera: left edge sideways, top edge upright */
 body.fullcam:not(.v) .fs-view > .camera { justify-self: start; }
 body.fullcam.v .fs-view > .camera { align-self: start; }
+/* Full-screen Lens view: a big, cut-off piece of the turned camera, pushed against the screen edge
+   where the phone's real selfie camera is. The drawn notch stays life-size (--mm) so it lines up
+   with, and blends into, the real notch. */
+body.fullcam.lens-view .fs-view {
+  overflow: hidden;
+  display: block;
+  /* reach the physical screen edges on the notch side */
+  margin: calc(-1 * (var(--pt) + 10px)) 0 calc(-1 * (var(--pb) + 10px)) calc(-1 * (var(--pl) + 10px));
+}
+body.fullcam.lens-view .fs-view > .camera { position: absolute; margin: 0; }
+body.fullcam.lens-view:not(.v) .fs-view > .camera {
+  /* sideways: as tall as the screen, from the left edge; cut off where the controls start */
+  width: calc(100cqh * 58 / 24.5);
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+body.fullcam.lens-view.v .fs-view { margin: calc(-1 * (var(--pt) + 10px)) calc(-1 * (var(--pr) + 10px)) 0 calc(-1 * (var(--pl) + 10px)); }
+body.fullcam.lens-view.v .fs-view > .camera {
+  /* upright: hanging from the top edge, centred, cut off at both sides */
+  width: 150cqw;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+}
+body.fullcam .f-notch { --m: var(--mm, 6.25px); } /* real millimetres, whatever the body's size */
+/* upright: the picture sits at the top, like the normal vertical layout */
+body.fullcam.v .fs-view > .lcd { align-self: start; }
 .fs-exit.flip-btn svg { width: 52%; height: 52%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 /* phone upright (vertical layout): controls along the bottom instead */
-body.v .fscam { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+body.v .fscam { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+body.v .fs-top { flex-direction: column; }
 body.v .fs-side { flex-direction: row; justify-content: space-around; }
 body.v .fs-side .arrow-pair { flex-direction: row; }
 body.v .below { margin-top: auto; }
