@@ -1,7 +1,7 @@
 /* Retro Cam service worker: offline app shell.
  * Files are fetched fresh when online; VERSION only needs bumping if you
  * rename or remove files in SHELL. */
-const VERSION = 'retro-cam-v1';
+const VERSION = 'retro-cam-v2';
 const SHELL = [
   './',
   './index.html',

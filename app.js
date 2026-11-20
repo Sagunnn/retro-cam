@@ -59,20 +59,39 @@
   //   gain      per-channel multiply        shadow/high  tint added to shadows / highlights (0..255)
   //   noise     luma grain amplitude        chroma     colour-noise amplitude
   //   ca        red-channel offset in px at the full 1792 width (cheap-lens fringing)
+  // Looks, in ▲ ▼ order. Grain is kept very low: a Charmera picture is soft and airy, not grainy.
   const FILTERS = [
-    // the default look: hazy, washed-out early-2000s digicam (lifted shadows, blown soft highlights)
-    { id: 'y2k', name: 'Y2K', exposure: 1.1, sat: 0.94, contrast: 0.8, lift: 0.075, roll: 0.97,
-      gain: [1.03, 1.0, 0.98], shadow: [8, 2, 12], high: [8, 6, 0],
-      noise: 3, chroma: 2.5, bloom: 0.5, vignette: 0.14, ca: 2 },
-    { id: 'warm', name: 'WARM', exposure: 1.06, sat: 0.84, contrast: 0.82, lift: 0.1, roll: 0.95,
-      gain: [1.09, 1.0, 0.85], shadow: [20, 8, -4], high: [12, 6, -14],
-      noise: 3.5, chroma: 2, bloom: 0.45, vignette: 0.3, ca: 2 },
+    // default: bright, slightly cool, gently faded, low contrast (modelled on a real Charmera print)
+    { id: 'y2k', name: 'Y2K', exposure: 1.12, sat: 0.9, contrast: 0.8, lift: 0.08, roll: 0.98,
+      gain: [0.98, 1.0, 1.02], shadow: [0, 6, 10], high: [-4, 4, 8],
+      noise: 1.2, chroma: 0.8, bloom: 0.45, vignette: 0.06, ca: 1 },
+    { id: 'airy', name: 'AIRY', exposure: 1.2, sat: 0.78, contrast: 0.72, lift: 0.12, roll: 0.99,
+      gain: [1.0, 1.01, 1.03], shadow: [6, 8, 14], high: [4, 6, 8],
+      noise: 0.8, chroma: 0.5, bloom: 0.55, vignette: 0, ca: 0 },
+    { id: 'warm', name: 'WARM', exposure: 1.06, sat: 0.86, contrast: 0.84, lift: 0.09, roll: 0.95,
+      gain: [1.09, 1.0, 0.86], shadow: [18, 8, -4], high: [12, 6, -14],
+      noise: 1.5, chroma: 1, bloom: 0.45, vignette: 0.2, ca: 1 },
+    { id: 'film', name: 'FILM', exposure: 1.05, sat: 0.95, contrast: 0.88, lift: 0.07, roll: 0.95,
+      gain: [1.05, 1.0, 0.92], shadow: [4, 10, 6], high: [12, 6, -4],
+      noise: 1.5, chroma: 1, bloom: 0.35, vignette: 0.15, ca: 1 },
     { id: 'ccd', name: 'CCD', exposure: 1.04, sat: 1.12, contrast: 0.98, lift: 0.04, roll: 0.985,
       gain: [0.94, 1.0, 1.08], shadow: [-4, 6, 18], high: [-6, 4, 12],
-      noise: 3, chroma: 3, bloom: 0.55, vignette: 0.18, ca: 3 },
+      noise: 1.5, chroma: 1.5, bloom: 0.55, vignette: 0.12, ca: 2 },
+    { id: 'vivid', name: 'VIVID', exposure: 1.04, sat: 1.35, contrast: 1.08, lift: 0.02, roll: 1.0,
+      gain: [1, 1, 1], shadow: [0, 0, 0], high: [0, 0, 0],
+      noise: 1, chroma: 0.8, bloom: 0.3, vignette: 0.12, ca: 1 },
+    { id: 'teal', name: 'TEAL', exposure: 1.05, sat: 1.0, contrast: 0.95, lift: 0.05, roll: 0.98,
+      gain: [1.02, 1.0, 0.98], shadow: [-10, 10, 18], high: [14, 6, -8],
+      noise: 1.2, chroma: 1, bloom: 0.4, vignette: 0.12, ca: 1 },
+    { id: 'pink', name: 'PINK', exposure: 1.1, sat: 0.9, contrast: 0.82, lift: 0.09, roll: 0.97,
+      gain: [1.06, 0.97, 1.02], shadow: [14, 0, 10], high: [10, 0, 6],
+      noise: 1, chroma: 0.8, bloom: 0.5, vignette: 0.05, ca: 0 },
     { id: 'bw', name: 'B&W', bw: true, exposure: 1.05, sat: 0, contrast: 1.2, lift: 0.05, roll: 0.97,
       gain: [1, 1, 1], shadow: [0, 0, 0], high: [0, 0, 0],
-      noise: 6, chroma: 0, bloom: 0.3, vignette: 0.3, ca: 0 },
+      noise: 2.5, chroma: 0, bloom: 0.3, vignette: 0.25, ca: 0 },
+    { id: 'sepia', name: 'SEPIA', bw: true, exposure: 1.05, sat: 0, contrast: 1.0, lift: 0.08, roll: 0.95,
+      gain: [1.1, 1.0, 0.8], shadow: [6, 2, -4], high: [6, 2, -6],
+      noise: 2, chroma: 0, bloom: 0.3, vignette: 0.22, ca: 0 },
   ];
 
   const FRAMES = ['none', 'film', 'instant', 'round'];
@@ -881,11 +900,11 @@
   // Output: 1.6 MP in the LCD's shape: 1792×896 horizontal, 896×1792 vertical.
   // The "sensor": the picture is developed at ~0.3 MP and only then blown up to 1.6 MP,
   // the way cheap 2000s cameras interpolated a tiny sensor up to the number on the box.
-  const sensor = makeCanvas(768, 384);
+  const sensor = makeCanvas(1024, 512);
   const sensorCtx = ctx2d(sensor);
-  const SHARPEN = 0.4;         // in-camera oversharpening → bright halos on edges
-  const CRUNCH_QUALITY = 0.62; // in-camera JPEG → soft blocks and colour bleed
-  const SAVE_QUALITY = 0.78;   // the file you get
+  const SHARPEN = 0.15;        // a touch of in-camera sharpening (soft, not crunchy)
+  const CRUNCH_QUALITY = 0.82; // in-camera JPEG: a little smearing, no harsh blocks
+  const SAVE_QUALITY = 0.86;   // the file you get
 
   // 4-neighbour unsharp mask, applied at sensor resolution so the halos come out thick.
   function sharpen(ctx, w, h, amount) {
@@ -964,12 +983,12 @@
     sensorCtx.imageSmoothingEnabled = true;
     sensorCtx.imageSmoothingQuality = 'high';
     [OUT_W, OUT_H] = shape(1792, 896);
-    const [SENSOR_W, SENSOR_H] = shape(768, 384);
+    const [SENSOR_W, SENSOR_H] = shape(1024, 512);
     if (sensor.width !== SENSOR_W || sensor.height !== SENSOR_H) { sensor.width = SENSOR_W; sensor.height = SENSOR_H; }
     sensorCtx.imageSmoothingEnabled = true;
     sensorCtx.imageSmoothingQuality = 'high';
     drawCover(sensorCtx, SENSOR_W, SENSOR_H, src, srcW, srcH, mirror, turn);
-    processPixels(sensorCtx, SENSOR_W, SENSOR_H, f, 768 / 1792);
+    processPixels(sensorCtx, SENSOR_W, SENSOR_H, f, 1024 / 1792);
     // 2. the camera's own sharpening and 3. its JPEG engine
     sharpen(sensorCtx, SENSOR_W, SENSOR_H, SHARPEN);
     const crunched = await decodeImage(await canvasToBlob(sensor, 'image/jpeg', CRUNCH_QUALITY));
@@ -977,7 +996,7 @@
     out = makeCanvas(OUT_W, OUT_H);
     octx = ctx2d(out);
     octx.imageSmoothingEnabled = true;
-    octx.imageSmoothingQuality = 'medium';
+    octx.imageSmoothingQuality = 'high';
     octx.drawImage(crunched, 0, 0, OUT_W, OUT_H);
     if (crunched.close) crunched.close();
     bloom(out, octx, f.bloom);

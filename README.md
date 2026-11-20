@@ -43,7 +43,8 @@ CNAME           custom domain for GitHub Pages
   screen for 5 seconds; press the shutter again (or tap the screen) to go straight back to the
   live view. Every shot is kept in the film roll. Space/Enter works on a computer, and so do
   Bluetooth selfie remotes. iPhone Safari doesn't let websites use the volume buttons.
-- **▲ / ▼** change the look: Y2K, Warm, CCD, B&W. You can also swipe across the screen. Extra ▲ ▼
+- **▲ / ▼** change the look: Y2K (default: bright, slightly cool, gently faded), Airy, Warm, Film,
+  CCD, Vivid, Teal, Pink, B&W, Sepia. You can also swipe across the screen. Extra ▲ ▼
   and Play buttons sit next to the camera: horizontal = arrows above the right-edge capture button
   and Play on the left; vertical = Play, Capture and Video in one row, with the arrows stacked above Video.
 - **Save** (download arrow in the row of toggles) opens the film roll: tick the shots you want, then
@@ -137,6 +138,13 @@ camera permission the first time.
 ### Install on Android
 
 Chrome shows **Install** in the row under the camera (or use ⋮ → *Install app*).
+
+## Offline
+
+After the first visit the app works with no connection: the service worker (`sw.js`) keeps the
+page, styles, script and icons, and photos are stored on the device. On iPhone, a Home Screen app
+keeps its own storage separate from Safari, so open the installed app once while online before
+relying on it offline.
 
 ## Notes
 
