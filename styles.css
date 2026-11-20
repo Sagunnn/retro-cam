@@ -432,8 +432,14 @@ body.v .stage { gap: 30px; }
 /* controls sit at the bottom, within thumb reach; the camera floats in the space above,
    a little high (one share of the free space above it, two below) */
 .cam-slot { margin-block: auto; }
+body.v .cam-slot { margin-top: max(24px, 5cqh); margin-bottom: auto; } /* near the top */
 body.v .below { margin-top: auto; }
 body:not(.v) .dock { margin-top: auto; }
+/* Horizontal on a phone (held top-to-the-left): the iPhone's rear lens is ~12 mm in from that
+   top-left corner, so the camera sits in the corner with its viewfinder over the real lens. */
+@media (pointer: coarse) {
+  body:not(.v) .cam-slot { align-self: flex-start; margin: max(24px, 5cqh) 0 auto; }
+}
 body.v .below {
   display: flex;
   align-items: center;
