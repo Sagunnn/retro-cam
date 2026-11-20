@@ -16,8 +16,9 @@
     filterPrev: $('filterPrev'), filterNext: $('filterNext'),
     muteBtn: $('muteBtn'), installBtn: $('installBtn'), iosTip: $('iosTip'), iosTipClose: $('iosTipClose'),
     screenFlash: $('screenFlash'),
-    review: $('review'), reviewImg: $('reviewImg'), reviewMeta: $('reviewMeta'), reviewTitle: $('reviewTitle'),
-    discardBtn: $('discardBtn'), discardLabel: $('discardLabel'), keepBtn: $('keepBtn'),
+    review: $('review'), reviewImg: $('reviewImg'), reviewVid: $('reviewVid'),
+    discardBtn: $('discardBtn'), keepBtn: $('keepBtn'),
+    modeBtn: $('modeBtn'), hudRec: $('hudRec'), hudRecText: $('hudRecText'),
     saveBtn: $('saveBtn'), downloadLink: $('downloadLink'),
     rollSheet: $('rollSheet'), rollGrid: $('rollGrid'), rollCount: $('rollCount'), rollEmpty: $('rollEmpty'),
     clearRollBtn: $('clearRollBtn'), closeRollBtn: $('closeRollBtn'),
@@ -76,6 +77,8 @@
     muted: !!store.get('muted', false),
     facing: store.get('facing', 'environment') === 'user' ? 'user' : 'environment',
     frameNo: store.get('frameNo', 0) | 0,
+    mode: store.get('mode', 'photo') === 'video' ? 'video' : 'photo',
+    recording: false, recorder: null, noMic: false,
     stream: null, track: null, mirror: false, torch: false,
     running: false, paused: false, busy: false, starting: false,
     cameraCount: 2, shots: 0, error: null,
@@ -309,7 +312,7 @@
     ctx.restore();
   }
 
-  // Fill a w×h canvas with the source (cover crop), optionally turned 90° and mirrored.
+  // Fill a w×h canvas with the source (cover crop), optionally turned ±90° and mirrored.
   // `turn` is used when the app is rotated sideways in a portrait browser: the camera
   // still delivers upright-portrait frames, so they're turned to match how the phone is held.
   function drawCover(ctx, w, h, src, srcW, srcH, mirror, turn) {
@@ -319,11 +322,14 @@
     ctx.save();
     ctx.translate(w / 2, h / 2);
     if (mirror) ctx.scale(-1, 1);
-    if (turn) ctx.rotate(-Math.PI / 2);
+    if (turn) ctx.rotate((turn * Math.PI) / 2);
     ctx.drawImage(src, (-srcW * scale) / 2, (-srcH * scale) / 2, srcW * scale, srcH * scale);
     ctx.restore();
   }
-  const needsTurn = (w, h) => UI_ROTATED.matches && h > w;
+  // How far to turn portrait camera frames when the app is shown sideways (phone top to the left):
+  // the back camera's world-up is on the frame's right (turn -90°); the selfie camera's raw frame
+  // is mirrored relative to that, so its world-up is on the left (turn +90°). 0 = no turn.
+  const needsTurn = (w, h) => (UI_ROTATED.matches && h > w ? (state.mirror ? 1 : -1) : 0);
 
   /* ----- seven-segment red-orange date stamp */
   const SEGMENTS = {
@@ -500,12 +506,119 @@
     const v = el.video;
     if (v.readyState < 2 || !v.videoWidth) return;
     lastFrame = now;
-    drawCover(viewCtx, el.view.width, el.view.height, v, v.videoWidth, v.videoHeight, state.mirror,
-      needsTurn(v.videoWidth, v.videoHeight));
+    const turn = needsTurn(v.videoWidth, v.videoHeight);
+    if (state.recording) {
+      // develop the recording frame once, then show it on the LCD
+      drawCover(recCtx, REC_W, REC_H, v, v.videoWidth, v.videoHeight, state.mirror, turn);
+      const f = FILTERS[state.filter];
+      processPixels(recCtx, REC_W, REC_H, f, REC_W / 1792);
+      bloom(recCanvas, recCtx, f.bloom);
+      if (state.date) drawDateStamp(recCtx, { x: 0, y: 0, w: REC_W, h: REC_H }, dateString());
+      viewCtx.drawImage(recCanvas, 0, 0, el.view.width, el.view.height);
+      updateRecClock();
+      return;
+    }
+    drawCover(viewCtx, el.view.width, el.view.height, v, v.videoWidth, v.videoHeight, state.mirror, turn);
     develop(el.view, viewCtx, {
-      filter: state.filter, frame: state.frame, date: state.date,
+      filter: state.filter, frame: state.mode === 'video' ? 'none' : state.frame, date: state.date,
       frameNo: state.frameNo + 1, when: new Date(), live: true,
     });
+  }
+
+  /* ------------------------------------------------------------- video */
+  // Lo-fi video like a 2000s digicam: 640×320, 24 fps, same colour/grain as photos.
+  const REC_W = 640, REC_H = 320, REC_FPS = 24, REC_MAX_S = 60;
+  const recCanvas = makeCanvas(REC_W, REC_H);
+  const recCtx = ctx2d(recCanvas);
+  let recStart = 0, recChunks = [], recMime = '', recTorch = false;
+
+  function pickMime() {
+    if (!window.MediaRecorder) return null;
+    const list = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+    for (const m of list) { try { if (MediaRecorder.isTypeSupported(m)) return m; } catch { /* ignore */ } }
+    return '';
+  }
+  function updateRecClock() {
+    const t = Math.floor((performance.now() - recStart) / 1000);
+    el.hudRecText.textContent = `REC ${pad(Math.floor(t / 60))}:${pad(t % 60)}`;
+    if (t >= REC_MAX_S) stopRecording();
+  }
+
+  async function startRecording() {
+    const mime = pickMime();
+    if (mime === null || !recCanvas.captureStream) {
+      lcdMsg('NO VIDEO');
+      toast('This browser can’t record video.');
+      return;
+    }
+    const stream = recCanvas.captureStream(REC_FPS);
+    const audio = state.stream && state.stream.getAudioTracks()[0];
+    if (audio) stream.addTrack(audio);
+    let rec;
+    try {
+      rec = new MediaRecorder(stream, { ...(mime ? { mimeType: mime } : {}), videoBitsPerSecond: 2_000_000 });
+    } catch {
+      rec = new MediaRecorder(stream);
+    }
+    recMime = rec.mimeType || mime || 'video/webm';
+    recChunks = [];
+    rec.ondataavailable = (e) => { if (e.data && e.data.size) recChunks.push(e.data); };
+    rec.onstop = finishRecording;
+    // first frame before the recorder starts, so the file never opens on black
+    const v = el.video;
+    drawCover(recCtx, REC_W, REC_H, v, v.videoWidth, v.videoHeight, state.mirror, needsTurn(v.videoWidth, v.videoHeight));
+    state.recorder = rec;
+    state.recording = true;
+    recStart = performance.now();
+    rec.start(1000);
+    if (state.flash && state.facing === 'environment' && state.torch) recTorch = await setTorch(true);
+    soundBlip(2400);
+    buzz(20);
+    updateHud();
+  }
+
+  function stopRecording() {
+    if (!state.recording) return;
+    state.recording = false;
+    try { state.recorder.stop(); } catch { finishRecording(); }
+    if (recTorch) { setTorch(false); recTorch = false; }
+    soundBlip(1600);
+    buzz([10, 40, 10]);
+    updateHud();
+  }
+
+  async function finishRecording() {
+    const chunks = recChunks;
+    recChunks = [];
+    state.recorder = null;
+    if (!chunks.length) { toast('Nothing was recorded.'); return; }
+    const blob = new Blob(chunks, { type: recMime.split(';')[0] });
+    const th = 192;
+    const t = makeCanvas(384, th);
+    t.getContext('2d').drawImage(recCanvas, 0, 0, 384, th);
+    const thumb = await canvasToBlob(t, 'image/jpeg', 0.75);
+    state.frameNo += 1;
+    store.set('frameNo', state.frameNo);
+    const now = Date.now();
+    const rec = {
+      kind: 'video', created: now, filter: FILTERS[state.filter].name, n: state.frameNo,
+      duration: Math.round((now - recStart) / 1000), blob, thumb,
+    };
+    rec.id = await roll.add(rec);
+    state.shots += 1;
+    updateHud();
+    refreshRollThumb(rec);
+    openReview(rec, 'fresh');
+  }
+
+  function setMode(mode) {
+    if (state.recording) stopRecording();
+    state.mode = mode;
+    store.set('mode', mode);
+    updateHud();
+    lcdMsg(mode === 'video' ? 'VIDEO' : 'PHOTO');
+    // video needs the microphone too, so reopen the camera with audio (and drop it again for photos)
+    if (state.running || state.error === 'busy' || state.error === 'error') startCamera();
   }
   function startLoop() { if (!rafId) rafId = requestAnimationFrame(loop); }
 
@@ -568,18 +681,19 @@
     showState('starting');
     try {
       let stream;
-      const want = {
-        audio: false,
-        video: {
-          facingMode: { ideal: state.facing },
-          width: { ideal: 1920 }, height: { ideal: 1080 },
-        },
-      };
+      const wantAudio = state.mode === 'video' && !state.noMic;
+      const video = { facingMode: { ideal: state.facing }, width: { ideal: 1920 }, height: { ideal: 1080 } };
+      const get = (audio, v) => navigator.mediaDevices.getUserMedia({ audio, video: v });
       try {
-        stream = await navigator.mediaDevices.getUserMedia(want);
+        stream = await get(wantAudio, video);
       } catch (e) {
-        if (e.name !== 'OverconstrainedError' && e.name !== 'ConstraintNotSatisfiedError') throw e;
-        stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: state.facing } });
+        if (e.name === 'OverconstrainedError' || e.name === 'ConstraintNotSatisfiedError') {
+          stream = await get(wantAudio, { facingMode: state.facing });
+        } else if (wantAudio && (e.name === 'NotAllowedError' || e.name === 'NotFoundError')) {
+          // mic refused or missing: carry on with silent video
+          state.noMic = true;
+          stream = await get(false, video);
+        } else throw e;
       }
       state.stream = stream;
       state.track = stream.getVideoTracks()[0];
@@ -750,7 +864,12 @@
   }
 
   async function shoot() {
+    if (current) { closeReview(); return; } // half-press back to shooting, like a real camera
     if (state.busy) return;
+    if (state.mode === 'video' && state.running) {
+      if (state.recording) stopRecording(); else startRecording();
+      return;
+    }
     if (!state.running) {
       if (state.error && !el.nativeBtn.hidden) el.nativeInput.click();
       else if (!state.starting) startCamera();
@@ -916,33 +1035,45 @@
     updateHud();
   }
 
-  /* ------------------------------------------------------------ review */
+  /* ------------------------------------------------- playback on the LCD */
   let current = null; // { rec, mode, url, file }
   function fileName(rec) {
     const d = new Date(rec.created);
-    return `retro_${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.jpg`;
+    const ext = rec.kind === 'video' ? (rec.blob.type.includes('mp4') ? 'mp4' : 'webm') : 'jpg';
+    return `retro_${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.${ext}`;
   }
   function openReview(rec, mode) {
     closeReview(true);
     const url = URL.createObjectURL(rec.blob);
     const name = fileName(rec);
+    const isVideo = rec.kind === 'video';
     let file = null;
-    try { file = new File([rec.blob], name, { type: 'image/jpeg', lastModified: rec.created }); } catch { /* old Safari */ }
+    try {
+      file = new File([rec.blob], name, { type: rec.blob.type || (isVideo ? 'video/mp4' : 'image/jpeg'), lastModified: rec.created });
+    } catch { /* old Safari */ }
     current = { rec, mode, url, file, name };
-    el.reviewImg.src = url;
+    el.reviewImg.hidden = isVideo;
+    el.reviewVid.hidden = !isVideo;
+    if (isVideo) {
+      el.reviewVid.src = url;
+      el.reviewVid.muted = false;
+      el.reviewVid.play().catch(() => { el.reviewVid.muted = true; el.reviewVid.play().catch(() => {}); });
+    } else {
+      el.reviewImg.src = url;
+    }
     el.downloadLink.href = url;
     el.downloadLink.download = name;
-    const d = new Date(rec.created);
-    el.reviewTitle.textContent = mode === 'fresh' ? 'Review' : `Shot ${pad(rec.n || rec.id, 3)}`;
-    el.reviewMeta.textContent = `${rec.filter} · ${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}`;
-    el.discardLabel.textContent = mode === 'fresh' ? 'Retake' : 'Delete';
+    el.discardBtn.hidden = mode !== 'roll';
     el.review.hidden = false;
     state.paused = true;
   }
   function closeReview(silent) {
     if (!current) return;
-    URL.revokeObjectURL(current.url);
+    el.reviewVid.pause();
+    el.reviewVid.removeAttribute('src');
+    el.reviewVid.load();
     el.reviewImg.removeAttribute('src');
+    URL.revokeObjectURL(current.url);
     current = null;
     el.review.hidden = true;
     if (el.rollSheet.hidden) state.paused = false;
@@ -951,36 +1082,38 @@
 
   function downloadCurrent() {
     el.downloadLink.click();
-    toast(IS_IOS ? 'Opening photo… long-press it to “Save to Photos”.' : 'Saved to your Downloads.');
+    const what = current && current.rec.kind === 'video' ? 'video' : 'photo';
+    toast(IS_IOS ? `Opening ${what}… long-press it to save.` : 'Saved to your Downloads.');
   }
 
-  async function saveCurrent() {
+  async function saveCurrent(e) {
+    if (e) e.stopPropagation();
     if (!current) return;
     press();
-    const { file } = current;
+    const { file, rec } = current;
     const canShare = file && navigator.canShare && navigator.share && navigator.canShare({ files: [file] });
     if (canShare && IS_MOBILE) {
       try {
         await navigator.share({ files: [file], title: 'Retro Cam' });
-        toast('Done! Pick “Save Image” to keep it in Photos.');
+        toast(rec.kind === 'video' ? 'Pick “Save Video” to keep it in Photos.' : 'Pick “Save Image” to keep it in Photos.');
         return;
-      } catch (e) {
-        if (e && e.name === 'AbortError') return; // user closed the sheet
+      } catch (err) {
+        if (err && err.name === 'AbortError') return; // user closed the sheet
         // fall back to a plain download
       }
     }
     downloadCurrent();
   }
 
-  async function discardCurrent() {
+  async function discardCurrent(e) {
+    if (e) e.stopPropagation();
     if (!current) return;
     press();
-    const { rec, mode } = current;
+    const { rec } = current;
     await roll.del(rec.id).catch(() => {});
     closeReview();
     await syncRoll();
-    if (mode === 'roll') { await renderRoll(); toast('Deleted.'); }
-    else lcdMsg('DELETED');
+    lcdMsg('DELETED');
   }
 
   /* ------------------------------------------------------- roll drawer */
@@ -999,7 +1132,8 @@
       img.alt = `Shot ${rec.n || rec.id}`;
       img.loading = 'lazy';
       b.append(img);
-      b.addEventListener('click', () => { press(); openReview(rec, 'roll'); });
+      if (rec.kind === 'video') b.classList.add('vid');
+      b.addEventListener('click', () => { press(); closeRoll(); openReview(rec, 'roll'); });
       el.rollGrid.appendChild(b);
     }
     el.rollEmpty.hidden = list.length > 0;
@@ -1028,6 +1162,13 @@
     el.hudFlash.toggleAttribute('hidden', !state.flash);
     el.hudFacing.textContent = state.facing === 'user' ? 'SELFIE' : 'REAR';
     el.hudCount.textContent = pad(Math.min(999, state.shots), 3);
+    const video = state.mode === 'video';
+    el.modeBtn.setAttribute('aria-pressed', String(video));
+    el.hudRec.hidden = !video;
+    el.hudRec.classList.toggle('rec', state.recording);
+    if (!state.recording) el.hudRecText.textContent = 'STBY';
+    el.shutterBtn.classList.toggle('recording', state.recording);
+    el.shutterBtn.setAttribute('aria-label', video ? (state.recording ? 'Stop recording' : 'Start recording') : 'Take photo');
     el.flashBtn.setAttribute('aria-pressed', String(state.flash));
     el.dateBtn.setAttribute('aria-pressed', String(state.date));
     el.frameBtn.setAttribute('aria-pressed', String(state.frame !== 'none'));
@@ -1110,6 +1251,7 @@
   /* ------------------------------------------------------------- wiring */
   function bind() {
     el.shutterBtn.addEventListener('click', shoot);
+    el.saveBtn.addEventListener('pointerup', (e) => e.stopPropagation());
     el.shutterBtn.addEventListener('pointerdown', () => { audio(); });
     el.lcd.addEventListener('pointerdown', () => { audio(); });
     el.flipBtn.addEventListener('click', flipCamera);
@@ -1161,9 +1303,10 @@
 
     el.saveBtn.addEventListener('click', saveCurrent);
     el.discardBtn.addEventListener('click', discardCurrent);
-    el.keepBtn.addEventListener('click', () => { press(); closeReview(); });
-    el.review.addEventListener('click', (e) => { if (e.target === el.review) closeReview(); });
-    el.downloadLink.addEventListener('click', (e) => { e.stopPropagation(); });
+    el.keepBtn.addEventListener('click', (e) => { e.stopPropagation(); press(); closeReview(); });
+    el.review.addEventListener('pointerup', (e) => e.stopPropagation()); // taps on playback aren't shutter taps
+    el.reviewVid.addEventListener('click', () => { el.reviewVid.muted = !el.reviewVid.muted; });
+    el.modeBtn.addEventListener('click', () => { press(); setMode(state.mode === 'video' ? 'photo' : 'video'); });
 
     el.retryBtn.addEventListener('click', () => { press(); startCamera(); });
     el.nativeInput.addEventListener('change', () => shootFromFile(el.nativeInput.files && el.nativeInput.files[0]));
@@ -1210,6 +1353,7 @@
     let resumeOnShow = false;
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
+        stopRecording();
         resumeOnShow = state.running;
         stopCamera();
       } else if (resumeOnShow || (!state.running && !state.error)) {

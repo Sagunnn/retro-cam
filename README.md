@@ -30,12 +30,16 @@ CNAME           custom domain for GitHub Pages
   do Bluetooth selfie remotes. iPhone Safari doesn't let websites use the volume buttons, so those
   only work as a shutter in browsers that pass the keys through.
 - **▲ / ▼** change the look: Y2K, Warm, CCD, B&W. You can also swipe across the screen.
-- **▶** opens the film roll. Tap a shot to save it again or delete it.
+- **▶** opens the film roll. Tap a shot to see it on the camera's screen, save it again or delete it.
+- **Video:** the small button with the red dot (top edge, left of the shutter) switches between photo
+  and video. In video mode the shutter starts and stops recording (lo-fi 640×320, 24 fps, with
+  sound, up to 60 s). Video gets the same look and date stamp.
 - Row under the camera: switch camera, flash, date stamp, frame (film border by default, then none /
   instant / round), sound.
 - The coloured dots change the body: Yellow, Clear, Red, Blue, Black.
-- After each shot: **Save Photo** opens the share sheet on phones (choose *Save Image* to put it
-  in Photos). On a computer it downloads the JPEG. **Retake** throws the shot away.
+- After each shot it plays back on the camera's screen. **Save** (bottom right) opens the share sheet
+  on phones (choose *Save Image* / *Save Video* to put it in Photos). On a computer it downloads the
+  file. **✕** goes back to shooting; the shot stays in the roll.
 
 ## Deploy on GitHub Pages (retro.sagunpradhan.com.np)
 
