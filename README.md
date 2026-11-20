@@ -65,7 +65,7 @@ CNAME           custom domain for GitHub Pages
   to leave (top-right corner), small toggles for video mode, HQ / vintage, Wide / normal and (selfie)
   Lens, and the capture button far right, half way down, with flip camera above it and the
   horizontal / vertical toggle below it. Review, playback and the arrows work as usual. Upright, the
-  controls run along the bottom.
+  controls sit along the bottom with capture in the middle (toggles + Play left, arrows right).
 - **Wide**: rear camera → the phone's ultra-wide (0.5×) lens, found by its name (iPhone: "Back Ultra
   Wide Camera"). Selfie camera → the front sensor's full 4:3 picture instead of the 16:9 crop (about a
   third wider side to side with the phone upright; Safari doesn't allow zooming the front camera below

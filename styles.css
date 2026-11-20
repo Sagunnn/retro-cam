@@ -680,8 +680,22 @@ body.fullcam.v .fs-view > .lcd { align-self: start; margin-top: 52px; } /* below
 /* phone upright (vertical layout): controls along the bottom instead */
 body.v .fscam { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
 
-body.v .fs-side { flex-direction: row; justify-content: space-around; }
-body.v .fs-side .arrow-pair { flex-direction: row; }
+/* upright: capture in the middle (flip above, layout below), toggles + Play left, arrows right */
+body.v .fs-side {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    'top  cap arrows'
+    'play cap arrows';
+  justify-items: center;
+  align-items: center;
+  row-gap: 12px;
+}
+body.v .fs-top { grid-area: top; }
+body.v #fsPlay { grid-area: play; }
+body.v .fs-side .arrow-pair { grid-area: arrows; }
+body.v .fs-capcol { grid-area: cap; }
 body.v .below { margin-top: auto; }
 body:not(.v) .dock { margin-top: auto; }
 /* Horizontal on a phone (held top-to-the-left): the iPhone's rear lens is ~12 mm in from that
