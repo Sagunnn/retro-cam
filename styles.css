@@ -631,8 +631,8 @@ body.fullcam.lens-view:not(.v) .fs-view > .camera {
 }
 body.fullcam.lens-view.v .fs-view { margin: calc(-1 * (var(--pt) + 10px)) calc(-1 * (var(--pr) + 10px)) 0 calc(-1 * (var(--pl) + 10px)); }
 body.fullcam.lens-view.v .fs-view > .camera {
-  /* upright: hanging from the top edge, centred, cut off at both sides */
-  width: 150cqw;
+  /* upright: the whole camera, fitted to the screen width, hanging from the top edge */
+  width: 100cqw;
   left: 50%;
   top: 0;
   transform: translateX(-50%);
