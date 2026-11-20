@@ -26,20 +26,19 @@ CNAME           custom domain for GitHub Pages
 
 ## Using it
 
-- **Shutter** on the top edge of the body, or tap the screen. Space/Enter works on a computer, and so
-  do Bluetooth selfie remotes. iPhone Safari doesn't let websites use the volume buttons, so those
-  only work as a shutter in browsers that pass the keys through.
+- **Shutter:** the big red button at the bottom right, or tap the screen. Each shot goes straight
+  into the film roll, so you can keep shooting. Space/Enter works on a computer, and so do Bluetooth
+  selfie remotes. iPhone Safari doesn't let websites use the volume buttons.
 - **▲ / ▼** change the look: Y2K, Warm, CCD, B&W. You can also swipe across the screen.
-- **▶** opens the film roll. Tap a shot to see it on the camera's screen, save it again or delete it.
-- **Video:** the small button with the red dot (top edge, left of the shutter) switches between photo
-  and video. In video mode the shutter starts and stops recording (lo-fi 640×320, 24 fps, with
-  sound, up to 60 s). Video gets the same look and date stamp.
+- **▶** (under the viewfinder) opens the film roll. Tap shots to select them (or **Select all**),
+  then **Save to Photos**. On iPhone that opens the share sheet; choose *Save Images* / *Save Video*.
+  On a computer the files download. **Delete** removes the selected shots from the roll.
+- **Video:** the small button with the red dot on the top edge switches between photo and video.
+  In video mode the shutter starts and stops recording (lo-fi 640×320, 24 fps, with sound, up to
+  60 s). Video gets the same look and date stamp.
 - Row under the camera: switch camera, flash, date stamp, frame (film border by default, then none /
   instant / round), sound.
 - The coloured dots change the body: Yellow, Clear, Red, Blue, Black.
-- After each shot it plays back on the camera's screen. **Save** (bottom right) opens the share sheet
-  on phones (choose *Save Image* / *Save Video* to put it in Photos). On a computer it downloads the
-  file. **✕** goes back to shooting; the shot stays in the roll.
 
 ## Deploy on GitHub Pages (retro.sagunpradhan.com.np)
 

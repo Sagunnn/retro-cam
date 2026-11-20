@@ -18,7 +18,7 @@
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 
-  <link rel="stylesheet" href="styles.css?v=1b7b19c3d4">
+  <link rel="stylesheet" href="styles.css?v=7af2913a63">
 </head>
 <body data-color="yellow">
   <video id="video" playsinline muted autoplay aria-hidden="true"></video>
@@ -29,9 +29,11 @@
       <!-- the camera, back view -->
       <div class="camera" id="camera">
         <button class="mode" id="modeBtn" aria-label="Photo / video mode" aria-pressed="false"><i></i></button>
-        <button class="shutter" id="shutterBtn" aria-label="Take photo"></button>
         <div class="shell">
-        <div class="ovf" aria-hidden="true"></div>
+        <div class="left">
+          <div class="ovf" aria-hidden="true"></div>
+          <button class="rb play" id="rollBtn" aria-label="Film roll"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5v11l9-5.5z"/></svg></button>
+        </div>
 
         <div class="bezel">
           <div class="lcd" id="lcd">
@@ -47,14 +49,6 @@
               <span class="hud-tc" id="hudRec" hidden><i></i><span id="hudRecText">STBY</span></span>
               <span class="hud-msg" id="hudMsg"></span>
             </div>
-            <!-- playback: the shot you just took (or one from the roll), right on the LCD -->
-            <div class="playback" id="review" hidden>
-              <img id="reviewImg" alt="Captured photo">
-              <video id="reviewVid" playsinline loop hidden></video>
-              <button class="pb-btn pb-x" id="keepBtn" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-              <button class="pb-btn pb-del" id="discardBtn" aria-label="Delete" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
-              <button class="pb-save" id="saveBtn">Save</button>
-            </div>
             <div class="lcd-state" id="lcdState" hidden><span id="stateTitle">ON</span></div>
             <div class="lcd-glass" aria-hidden="true"></div>
           </div>
@@ -65,7 +59,7 @@
             <button class="rb" id="filterPrev" aria-label="Previous filter"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7.5 6.5 15.5h11z"/></svg></button>
             <button class="rb" id="filterNext" aria-label="Next filter"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16.5 6.5 8.5h11z"/></svg></button>
           </div>
-          <button class="rb play" id="rollBtn" aria-label="Film roll"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5v11l9-5.5z"/></svg></button>
+          <button class="shutter" id="shutterBtn" aria-label="Take photo"><span></span></button>
         </div>
         </div>
       </div>
@@ -131,19 +125,23 @@
             <p id="rollCount">0 shots</p>
           </div>
           <div class="drawer-actions">
-            <button class="chip" id="clearRollBtn">Clear</button>
+            <button class="chip" id="selectAllBtn">Select all</button>
             <button class="chip" id="closeRollBtn">Close</button>
           </div>
         </div>
         <div class="roll-grid" id="rollGrid"></div>
         <p class="roll-empty" id="rollEmpty">No shots yet.</p>
-        <p class="roll-note">Kept on this device only. Open a shot and tap Save to put it in Photos.</p>
+        <div class="roll-bar" id="rollBar">
+          <p class="roll-note">Tap shots to select them. Kept on this device until you save them.</p>
+          <button class="chip" id="deleteSelBtn" disabled>Delete</button>
+          <button class="chip primary" id="saveSelBtn" disabled>Save to Photos</button>
+        </div>
       </div>
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <script src="app.js?v=0626664ccd" defer></script>
+  <script src="app.js?v=bef1f69a84" defer></script>
 </body>
 </html>

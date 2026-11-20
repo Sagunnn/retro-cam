@@ -16,12 +16,11 @@
     filterPrev: $('filterPrev'), filterNext: $('filterNext'),
     muteBtn: $('muteBtn'), installBtn: $('installBtn'), iosTip: $('iosTip'), iosTipClose: $('iosTipClose'),
     screenFlash: $('screenFlash'),
-    review: $('review'), reviewImg: $('reviewImg'), reviewVid: $('reviewVid'),
-    discardBtn: $('discardBtn'), keepBtn: $('keepBtn'),
     modeBtn: $('modeBtn'), hudRec: $('hudRec'), hudRecText: $('hudRecText'),
-    saveBtn: $('saveBtn'), downloadLink: $('downloadLink'),
+    downloadLink: $('downloadLink'),
     rollSheet: $('rollSheet'), rollGrid: $('rollGrid'), rollCount: $('rollCount'), rollEmpty: $('rollEmpty'),
-    clearRollBtn: $('clearRollBtn'), closeRollBtn: $('closeRollBtn'),
+    closeRollBtn: $('closeRollBtn'), selectAllBtn: $('selectAllBtn'),
+    deleteSelBtn: $('deleteSelBtn'), saveSelBtn: $('saveSelBtn'),
     toast: $('toast'),
   };
 
@@ -608,7 +607,7 @@
     state.shots += 1;
     updateHud();
     refreshRollThumb(rec);
-    openReview(rec, 'fresh');
+    lcdMsg('→ ROLL');
   }
 
   function setMode(mode) {
@@ -864,7 +863,6 @@
   }
 
   async function shoot() {
-    if (current) { closeReview(); return; } // half-press back to shooting, like a real camera
     if (state.busy) return;
     if (state.mode === 'video' && state.running) {
       if (state.recording) stopRecording(); else startRecording();
@@ -911,7 +909,8 @@
       state.shots += 1;
       updateHud();
       refreshRollThumb(shot);
-      openReview(shot, 'fresh');
+      state.paused = false;
+      lcdMsg('→ ROLL');
     } catch (e) {
       console.error(e);
       state.paused = false;
@@ -953,7 +952,7 @@
       state.shots += 1;
       updateHud();
       refreshRollThumb(shot);
-      openReview(shot, 'fresh');
+      lcdMsg('→ ROLL');
     } catch (e) {
       console.error(e);
       toast('That photo couldn’t be opened.');
@@ -1035,115 +1034,107 @@
     updateHud();
   }
 
-  /* ------------------------------------------------- playback on the LCD */
-  let current = null; // { rec, mode, url, file }
+  /* ------------------------------------------------------- film roll */
+  // Shots land here straight after capture. Select some, then save them to Photos in one go.
+  let rollList = [];
+  const selected = new Set();
+  let gridUrls = [];
+
   function fileName(rec) {
     const d = new Date(rec.created);
     const ext = rec.kind === 'video' ? (rec.blob.type.includes('mp4') ? 'mp4' : 'webm') : 'jpg';
-    return `retro_${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.${ext}`;
+    return `retro_${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}_${rec.n || rec.id}.${ext}`;
   }
-  function openReview(rec, mode) {
-    closeReview(true);
-    const url = URL.createObjectURL(rec.blob);
-    const name = fileName(rec);
-    const isVideo = rec.kind === 'video';
-    let file = null;
-    try {
-      file = new File([rec.blob], name, { type: rec.blob.type || (isVideo ? 'video/mp4' : 'image/jpeg'), lastModified: rec.created });
-    } catch { /* old Safari */ }
-    current = { rec, mode, url, file, name };
-    el.reviewImg.hidden = isVideo;
-    el.reviewVid.hidden = !isVideo;
-    if (isVideo) {
-      el.reviewVid.src = url;
-      el.reviewVid.muted = false;
-      el.reviewVid.play().catch(() => { el.reviewVid.muted = true; el.reviewVid.play().catch(() => {}); });
-    } else {
-      el.reviewImg.src = url;
-    }
-    el.downloadLink.href = url;
-    el.downloadLink.download = name;
-    el.discardBtn.hidden = mode !== 'roll';
-    el.review.hidden = false;
-    state.paused = true;
-  }
-  function closeReview(silent) {
-    if (!current) return;
-    el.reviewVid.pause();
-    el.reviewVid.removeAttribute('src');
-    el.reviewVid.load();
-    el.reviewImg.removeAttribute('src');
-    URL.revokeObjectURL(current.url);
-    current = null;
-    el.review.hidden = true;
-    if (el.rollSheet.hidden) state.paused = false;
-    if (!silent) el.shutterBtn.focus({ preventScroll: true });
+  function toFile(rec) {
+    const type = rec.blob.type || (rec.kind === 'video' ? 'video/mp4' : 'image/jpeg');
+    try { return new File([rec.blob], fileName(rec), { type, lastModified: rec.created }); } catch { return null; }
   }
 
-  function downloadCurrent() {
-    el.downloadLink.click();
-    const what = current && current.rec.kind === 'video' ? 'video' : 'photo';
-    toast(IS_IOS ? `Opening ${what}… long-press it to save.` : 'Saved to your Downloads.');
+  function updateRollBar() {
+    const n = selected.size;
+    const total = rollList.length;
+    el.saveSelBtn.disabled = n === 0;
+    el.deleteSelBtn.disabled = n === 0;
+    el.saveSelBtn.textContent = n ? `Save ${n} to Photos` : 'Save to Photos';
+    el.selectAllBtn.hidden = total === 0;
+    el.selectAllBtn.textContent = total && n === total ? 'Select none' : 'Select all';
+    el.saveSelBtn.hidden = el.deleteSelBtn.hidden = total === 0;
   }
 
-  async function saveCurrent(e) {
-    if (e) e.stopPropagation();
-    if (!current) return;
-    press();
-    const { file, rec } = current;
-    const canShare = file && navigator.canShare && navigator.share && navigator.canShare({ files: [file] });
-    if (canShare && IS_MOBILE) {
-      try {
-        await navigator.share({ files: [file], title: 'Retro Cam' });
-        toast(rec.kind === 'video' ? 'Pick “Save Video” to keep it in Photos.' : 'Pick “Save Image” to keep it in Photos.');
-        return;
-      } catch (err) {
-        if (err && err.name === 'AbortError') return; // user closed the sheet
-        // fall back to a plain download
-      }
-    }
-    downloadCurrent();
-  }
-
-  async function discardCurrent(e) {
-    if (e) e.stopPropagation();
-    if (!current) return;
-    press();
-    const { rec } = current;
-    await roll.del(rec.id).catch(() => {});
-    closeReview();
-    await syncRoll();
-    lcdMsg('DELETED');
-  }
-
-  /* ------------------------------------------------------- roll drawer */
-  let gridUrls = [];
   async function renderRoll() {
     gridUrls.forEach((u) => URL.revokeObjectURL(u));
     gridUrls = [];
-    const list = await roll.all();
+    rollList = await roll.all();
+    for (const id of [...selected]) if (!rollList.some((r) => r.id === id)) selected.delete(id);
     el.rollGrid.textContent = '';
-    for (const rec of list) {
+    for (const rec of rollList) {
       const b = document.createElement('button');
       const u = URL.createObjectURL(rec.thumb || rec.blob);
       gridUrls.push(u);
       const img = document.createElement('img');
       img.src = u;
-      img.alt = `Shot ${rec.n || rec.id}`;
+      img.alt = `${rec.kind === 'video' ? 'Video' : 'Photo'} ${rec.n || rec.id}`;
       img.loading = 'lazy';
       b.append(img);
       if (rec.kind === 'video') b.classList.add('vid');
-      b.addEventListener('click', () => { press(); closeRoll(); openReview(rec, 'roll'); });
+      b.setAttribute('aria-pressed', String(selected.has(rec.id)));
+      b.addEventListener('click', () => {
+        buzz(6);
+        if (selected.has(rec.id)) selected.delete(rec.id); else selected.add(rec.id);
+        b.setAttribute('aria-pressed', String(selected.has(rec.id)));
+        updateRollBar();
+      });
       el.rollGrid.appendChild(b);
     }
-    el.rollEmpty.hidden = list.length > 0;
-    el.rollGrid.hidden = list.length === 0;
-    el.clearRollBtn.hidden = list.length === 0;
-    el.rollCount.textContent = `${list.length} shot${list.length === 1 ? '' : 's'}`;
+    el.rollEmpty.hidden = rollList.length > 0;
+    el.rollGrid.hidden = rollList.length === 0;
+    el.rollCount.textContent = `${rollList.length} shot${rollList.length === 1 ? '' : 's'}`;
+    updateRollBar();
   }
+
+  async function saveSelected() {
+    // Build the files synchronously so the share sheet still counts as a direct tap (iOS).
+    const recs = rollList.filter((r) => selected.has(r.id));
+    const files = recs.map(toFile).filter(Boolean);
+    if (!files.length) return;
+    press();
+    if (IS_MOBILE && navigator.share && navigator.canShare && navigator.canShare({ files })) {
+      try {
+        await navigator.share({ files });
+        selected.clear();
+        await renderRoll();
+        return;
+      } catch (err) {
+        if (err && err.name === 'AbortError') return; // closed the share sheet
+        // otherwise fall back to downloading
+      }
+    }
+    for (const f of files) {
+      const u = URL.createObjectURL(f);
+      el.downloadLink.href = u;
+      el.downloadLink.download = f.name;
+      el.downloadLink.click();
+      setTimeout(() => URL.revokeObjectURL(u), 10000);
+      await sleep(300);
+    }
+    toast(files.length > 1 ? `${files.length} files downloaded.` : 'Downloaded.');
+  }
+
+  async function deleteSelected() {
+    const n = selected.size;
+    if (!n || !confirm(`Delete ${n} shot${n === 1 ? '' : 's'} from the roll? This can’t be undone.`)) return;
+    for (const id of selected) await roll.del(id).catch(() => {});
+    selected.clear();
+    await syncRoll();
+    await renderRoll();
+    toast(`Deleted ${n}.`);
+  }
+
   async function openRoll() {
     press();
+    if (state.recording) stopRecording();
     state.paused = true;
+    selected.clear();
     el.rollSheet.hidden = false;
     await renderRoll();
   }
@@ -1151,8 +1142,10 @@
     el.rollSheet.hidden = true;
     gridUrls.forEach((u) => URL.revokeObjectURL(u));
     gridUrls = [];
+    rollList = [];
+    selected.clear();
     el.rollGrid.textContent = '';
-    if (!current) state.paused = false;
+    state.paused = false;
   }
 
   /* ---------------------------------------------------------------- HUD */
@@ -1251,7 +1244,6 @@
   /* ------------------------------------------------------------- wiring */
   function bind() {
     el.shutterBtn.addEventListener('click', shoot);
-    el.saveBtn.addEventListener('pointerup', (e) => e.stopPropagation());
     el.shutterBtn.addEventListener('pointerdown', () => { audio(); });
     el.lcd.addEventListener('pointerdown', () => { audio(); });
     el.flipBtn.addEventListener('click', flipCamera);
@@ -1292,20 +1284,17 @@
     el.rollBtn.addEventListener('click', openRoll);
     el.closeRollBtn.addEventListener('click', () => { press(); closeRoll(); });
     el.rollSheet.addEventListener('click', (e) => { if (e.target === el.rollSheet) closeRoll(); });
-    el.clearRollBtn.addEventListener('click', async () => {
-      const n = await roll.count();
-      if (!n || !confirm(`Delete all ${n} shot${n === 1 ? '' : 's'} from this device?`)) return;
-      await roll.clear();
-      await syncRoll();
-      await renderRoll();
-      toast('Roll cleared.');
+    el.selectAllBtn.addEventListener('click', () => {
+      press();
+      if (selected.size === rollList.length) selected.clear();
+      else rollList.forEach((r) => selected.add(r.id));
+      el.rollGrid.querySelectorAll('button').forEach((b, i) => {
+        b.setAttribute('aria-pressed', String(selected.has(rollList[i].id)));
+      });
+      updateRollBar();
     });
-
-    el.saveBtn.addEventListener('click', saveCurrent);
-    el.discardBtn.addEventListener('click', discardCurrent);
-    el.keepBtn.addEventListener('click', (e) => { e.stopPropagation(); press(); closeReview(); });
-    el.review.addEventListener('pointerup', (e) => e.stopPropagation()); // taps on playback aren't shutter taps
-    el.reviewVid.addEventListener('click', () => { el.reviewVid.muted = !el.reviewVid.muted; });
+    el.saveSelBtn.addEventListener('click', saveSelected);
+    el.deleteSelBtn.addEventListener('click', deleteSelected);
     el.modeBtn.addEventListener('click', () => { press(); setMode(state.mode === 'video' ? 'photo' : 'video'); });
 
     el.retryBtn.addEventListener('click', () => { press(); startCamera(); });
@@ -1330,8 +1319,7 @@
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        if (!el.review.hidden) closeReview();
-        else if (!el.rollSheet.hidden) closeRoll();
+        if (!el.rollSheet.hidden) closeRoll();
         else el.iosTip.hidden = true;
         return;
       }
@@ -1339,10 +1327,10 @@
       // these keys to the page get a shutter; iPhone Safari never does.
       if (e.key === 'AudioVolumeUp' || e.key === 'AudioVolumeDown' || e.key === 'VolumeUp' || e.key === 'VolumeDown') {
         e.preventDefault();
-        if (el.review.hidden && el.rollSheet.hidden) shoot();
+        if (el.rollSheet.hidden) shoot();
         return;
       }
-      if (!el.review.hidden || !el.rollSheet.hidden) return;
+      if (!el.rollSheet.hidden) return;
       const onButton = e.target instanceof HTMLElement && e.target.closest('button, a, input, label');
       if ((e.key === ' ' || e.key === 'Enter') && !onButton) { e.preventDefault(); shoot(); }
       else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') setFilter(state.filter - 1);

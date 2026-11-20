@@ -157,8 +157,13 @@ body[data-color='clear'] .shell {
     linear-gradient(180deg, #5f9a74, #46805c);
 }
 
+.left {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+}
 .ovf {
-  align-self: start;
   margin-top: 0.4cqw;
   width: 78%;
   aspect-ratio: 2 / 1;
@@ -265,60 +270,6 @@ body[data-color='clear'] .shell {
 .lcd-state.busy span::after { content: '…'; animation: dots 1s steps(3) infinite; }
 @keyframes dots { 50% { opacity: 0.2; } }
 
-/* playback on the LCD */
-.playback {
-  position: absolute;
-  inset: 0;
-  z-index: 6;
-  background: #000;
-  display: grid;
-  place-items: center;
-  animation: fade 0.15s ease-out;
-}
-.playback img, .playback video {
-  position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  -webkit-touch-callout: default; /* long-press → Save to Photos on iOS */
-  user-select: auto;
-}
-.pb-btn {
-  position: absolute;
-  top: 4%;
-  width: 9cqw;
-  height: 9cqw;
-  min-width: 26px;
-  min-height: 26px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-}
-.pb-btn::after { content: ''; position: absolute; inset: -8px; }
-.pb-btn svg { width: 50%; height: 50%; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-.pb-x { right: 2.5%; }
-.pb-del { left: 2.5%; }
-.pb-save {
-  position: absolute;
-  right: 2.5%;
-  bottom: 5%;
-  height: 10cqw;
-  min-height: 28px;
-  padding: 0 1.1em;
-  border-radius: 99px;
-  font: 700 max(12px, 4.4cqw)/1 var(--sans);
-  color: var(--ink);
-  background: #fbf8f1;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
-}
-.pb-save:active, .pb-btn:active { transform: scale(0.94); }
-
 /* right-hand buttons */
 .right {
   display: flex;
@@ -349,13 +300,13 @@ body[data-color='clear'] .shell {
 .rb::after { content: ''; position: absolute; inset: -1cqw; } /* larger hit area */
 .rb:active { transform: translateY(0.35cqw); box-shadow: 0 0.1cqw 0 #000; }
 .rb svg { width: 52%; height: 52%; fill: currentColor; }
-.rb.play { width: 8.6cqw; height: 8.6cqw; align-self: flex-start; margin-left: -2.6cqw; }
+.rb.play { width: 7.4cqw; height: 7.4cqw; margin-left: 1cqw; }
 
 /* mode (photo / video) button on the top edge */
 .mode {
   position: absolute;
   top: -1.6cqw;
-  right: 30.5cqw;
+  right: 19cqw;
   width: 6cqw;
   height: 3cqw;
   border-radius: 1cqw 1cqw 0 0;
@@ -376,22 +327,32 @@ body[data-color='clear'] .shell {
 .mode[aria-pressed='true'] i { background: #ff4a3a; box-shadow: 0 0 0.8cqw #ff4a3a; }
 .mode::after { content: ''; position: absolute; inset: -14px -8px -4px; }
 .mode:active { transform: translateY(0.8cqw); }
-.shutter.recording { background: linear-gradient(180deg, #ff6a5a, #c8281c 60%, #9e1d15); }
-
-/* shutter on the top edge */
+/* big shutter, bottom right: where the right thumb rests */
 .shutter {
-  position: absolute;
-  top: -2.1cqw;
-  right: 17cqw;
-  width: 11cqw;
-  height: 4cqw;
-  border-radius: 1.2cqw 1.2cqw 0 0;
-  background: linear-gradient(180deg, #6b6d72, #3a3b3f 60%, #2a2b2e);
-  box-shadow: inset 0 0.25cqw 0 rgba(255, 255, 255, 0.3);
-  transition: transform 0.06s;
+  position: relative;
+  width: 12.4cqw;
+  height: 12.4cqw;
+  margin-left: -2.4cqw;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 30%, #f4f5f7, #b9bdc3 55%, #8d9298);
+  box-shadow: 0 0.5cqw 0 rgba(0, 0, 0, 0.35), 0 1.2cqw 2cqw -0.6cqw rgba(0, 0, 0, 0.4), inset 0 -0.3cqw 0.4cqw rgba(0, 0, 0, 0.25);
+  transition: transform 0.06s, box-shadow 0.06s;
 }
-.shutter::after { content: ''; position: absolute; inset: -14px -10px -4px; } /* thumb-sized hit area */
-.shutter:active, .shutter.pressed { transform: translateY(1cqw); }
+.shutter::after { content: ''; position: absolute; inset: -1.6cqw; border-radius: 50%; } /* bigger hit area */
+.shutter span {
+  width: 76%;
+  height: 76%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 45% 32%, #ff7a6c 0%, #e2352a 45%, #a61e15 100%);
+  box-shadow: inset 0 0.3cqw 0.4cqw rgba(255, 255, 255, 0.35), inset 0 -0.4cqw 0.6cqw rgba(0, 0, 0, 0.3);
+  transition: border-radius 0.2s, width 0.2s, height 0.2s;
+}
+.shutter:active, .shutter.pressed { transform: translateY(0.45cqw); box-shadow: 0 0.1cqw 0 rgba(0, 0, 0, 0.35), inset 0 -0.3cqw 0.4cqw rgba(0, 0, 0, 0.25); }
+.shutter:disabled { cursor: default; }
+/* recording: the red dome becomes a rounded "stop" square */
+.shutter.recording span { width: 46%; height: 46%; border-radius: 18%; animation: recblink 1s steps(2) infinite; }
 
 /* ------------------------------------------------------------- dock */
 .dock {
@@ -563,6 +524,26 @@ body[data-color='clear'] .shell {
 }
 .roll-grid img { width: 100%; height: 100%; object-fit: contain; display: block; background: #1c1712; }
 .roll-grid button { position: relative; }
+.roll-grid button::before {
+  /* selection circle */
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.roll-grid button[aria-pressed='true'] { box-shadow: 0 0 0 3px var(--ink); }
+.roll-grid button[aria-pressed='true']::before {
+  border-color: #fff;
+  background: var(--ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12.5 4 4 8-9'/%3E%3C/svg%3E") center / 72% no-repeat;
+}
+.roll-grid button[aria-pressed='true'] img { opacity: 0.82; }
 .roll-grid button.vid::after {
   content: '';
   position: absolute;
@@ -575,8 +556,16 @@ body[data-color='clear'] .shell {
   border-bottom: 7px solid transparent;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7));
 }
-.roll-empty, .roll-note { text-align: center; font-size: 13px; color: var(--ink-soft); margin: 14px 0 0; }
-.roll-note { font-size: 12px; }
+.roll-empty { text-align: center; font-size: 13px; color: var(--ink-soft); margin: 14px 0 0; }
+.roll-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.roll-note { flex: 1; margin: 0; font-size: 12px; color: var(--ink-soft); }
+.chip:disabled { opacity: 0.4; cursor: default; }
+.chip.primary { background: var(--ink); color: var(--page); box-shadow: none; padding: 0 18px; }
 
 .toast {
   position: absolute;
