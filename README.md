@@ -26,9 +26,9 @@ CNAME           custom domain for GitHub Pages
 
 ## Using it
 
-- **Hold it either way.** Sideways it's the long horizontal camera. Upright, the same camera is
-  turned on its side, with a big capture button and a video-mode button underneath. Photos and
-  videos follow the screen: 1792×896 / 640×320 horizontal, 896×1792 / 320×640 upright.
+- **Hold it either way.** It's always the same horizontal camera. With the phone upright it spans
+  the screen width, with a big capture button and a video-mode button underneath. Photos and
+  videos always come out wide (1792×896 photo area, 640×320 video), matching the screen.
 - **Light** next to the viewfinder: green in photo mode, red in video mode, blinking while recording.
 - **Shutter:** the big red button (on the body when horizontal, below the camera when upright), or tap
   the screen. Each shot goes straight

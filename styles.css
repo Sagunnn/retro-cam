@@ -1,4 +1,4 @@
-/* Retro Cam: a simple, long keychain camera (turned on its side when the phone is upright) */
+/* Retro Cam: a simple, long, horizontal keychain camera */
 
 :root {
   --page: #efe9dc;
@@ -364,39 +364,17 @@ body[data-color='clear'] .shell {
 /* recording: the red dome becomes a rounded "stop" square */
 .shutter.recording span { width: 46%; height: 46%; border-radius: 18%; animation: recblink 1s steps(2) infinite; }
 
-/* --------------------------------------------- upright phone: camera on its side */
+/* --------------------------------- upright phone: same camera, buttons below it */
 .below { display: none; }
 @media (orientation: portrait) {
-  .cam-slot {
-    /* the body's long side runs down the screen */
-    --L: min(100cqh - var(--pt) - var(--pb) - 236px, (100cqw - var(--pl) - var(--pr) - 48px) / 0.46, 900px);
-    position: relative;
-    flex: none;
-    width: calc(var(--L) * 0.46);
-    height: var(--L);
-  }
   .camera {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: var(--L);
-    margin: 0;
-    transform: translate(-50%, -50%) rotate(90deg);
+    /* the horizontal camera spans the screen width */
+    width: min(100cqw - var(--pl) - var(--pr) - 24px, 620px);
+    margin-top: 0;
   }
-  /* capture + mode move below the camera */
+  /* capture + video mode move below the camera */
   .shell > .shutter, .camera .mode { visibility: hidden; }
-  /* the screen turns with the body; its readouts stay upright */
-  .lcd .hud, .lcd .lcd-state {
-    inset: auto;
-    left: 50%;
-    top: 50%;
-    width: 100cqh;
-    height: 100cqw;
-    transform: translate(-50%, -50%) rotate(-90deg);
-  }
-  .lcd .hud { font-size: 6.4cqh; }
-  .hud-tc { top: 12%; }
-
+  .stage { gap: 28px; }
   .below {
     display: flex;
     align-items: center;

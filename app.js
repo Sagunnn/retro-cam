@@ -28,10 +28,10 @@
   const IS_IOS = /iPad|iPhone|iPod/.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints > 1);
   const IS_MOBILE = IS_IOS || /Android|Mobi/i.test(UA) || !!(navigator.userAgentData && navigator.userAgentData.mobile);
   const STANDALONE = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-  // Phone held upright → vertical camera (same query as the CSS). Photos, video and the LCD
-  // all follow: 2:1 when horizontal, 1:2 when vertical.
+  // The camera is horizontal whichever way the phone is held, so pictures are always 2:1
+  // (an upright phone's portrait camera frame is cropped to the same wide shape).
   const VERTICAL = matchMedia('(orientation: portrait)');
-  const shape = (long, short) => (VERTICAL.matches ? [short, long] : [long, short]);
+  const shape = (long, short) => [long, short];
 
   /* ------------------------------------------------------------ settings */
   const store = {
@@ -393,7 +393,6 @@
 
   /* ----- film border: built AROUND the photo, date printed in the bottom band */
   function filmBorder(photo, frameNo, date) {
-    if (photo.height > photo.width) return filmBorderTall(photo, frameNo, date);
     const pw = photo.width, ph = photo.height;
     const side = Math.round(pw * 0.045);
     const band = Math.round(pw * 0.118);
@@ -453,53 +452,6 @@
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
   }
-  function filmTall(frameNo) {
-    const n = ((frameNo - 1) % 36) + 1;
-    return { n, prev: n === 1 ? '00' : String(n - 1) };
-  }
-  // Vertical shot: the strip runs top-to-bottom (sprocket holes down both sides);
-  // the edge print and the date sit upright in the top and bottom margins.
-  function filmBorderTall(photo, frameNo, date) {
-    const pw = photo.width, ph = photo.height;
-    const band = Math.round(ph * 0.118);   // side bands, same size as the landscape bands
-    const margin = Math.round(band * 0.5); // top / bottom print margins
-    const W = pw + band * 2, H = ph + margin * 2;
-    const c = makeCanvas(W, H);
-    const ctx = c.getContext('2d');
-    filmBase(ctx, W, H);
-    ctx.save();
-    ctx.beginPath();
-    roundRect(ctx, band, margin, pw, ph, ph * 0.012);
-    ctx.clip();
-    ctx.drawImage(photo, band, margin);
-    ctx.restore();
-    const hh = H * 0.046, hw = band * 0.44, step = H / 14;
-    ctx.fillStyle = '#060504';
-    ctx.beginPath();
-    for (let i = 0; i < 14; i++) {
-      const y = step * i + (step - hh) / 2;
-      roundRect(ctx, (band - hw) / 2, y, hw, hh, hh * 0.18);
-      roundRect(ctx, W - band + (band - hw) / 2, y, hw, hh, hh * 0.18);
-    }
-    ctx.fill();
-    const fs = Math.round(band * 0.26);
-    ctx.fillStyle = '#f0b03c';
-    ctx.textBaseline = 'middle';
-    ctx.font = `800 ${fs}px "Arial Narrow", "Helvetica Neue", Arial, sans-serif`;
-    const { n, prev } = filmTall(frameNo);
-    const tY = margin * 0.52, bY = H - margin * 0.52;
-    const left = band * 0.55, right = W - band * 0.55;
-    ctx.textAlign = 'left';
-    ctx.fillText('RETRO', left, tY);
-    ctx.fillText(`${prev}A`, left, bY);
-    ctx.textAlign = 'center';
-    ctx.fillText(String(n), W * 0.5, tY);
-    ctx.textAlign = 'right';
-    ctx.fillText('CAM', right, tY);
-    if (date) drawSegText(ctx, date, right, bY + fs * 0.5, fs * 1.05);
-    return c;
-  }
-
   /* ----- overlay frames (drawn over the photo edges; returns the visible photo area) */
   function drawFrame(ctx, w, h, frame) {
     if (frame === 'instant') {
@@ -574,32 +526,14 @@
       updateRecClock();
       return;
     }
-    // Upright phone: develop a portrait picture, then show it on the sideways-turned screen.
-    const target = VERTICAL.matches ? liveTall : el.view;
-    const tctx = VERTICAL.matches ? liveTallCtx : viewCtx;
-    drawCover(tctx, target.width, target.height, v, v.videoWidth, v.videoHeight, state.mirror, turn);
-    develop(target, tctx, {
+    drawCover(viewCtx, el.view.width, el.view.height, v, v.videoWidth, v.videoHeight, state.mirror, turn);
+    develop(el.view, viewCtx, {
       filter: state.filter, frame: state.mode === 'video' ? 'none' : state.frame, date: state.date,
       frameNo: state.frameNo + 1, when: new Date(), live: true,
     });
-    if (VERTICAL.matches) present(liveTall);
   }
-
-  // The LCD canvas is always 320×160 because the whole camera (screen included) is turned 90°
-  // when the phone is upright. Portrait pictures are drawn a quarter-turn back so they read upright.
-  const liveTall = makeCanvas(160, 320);
-  const liveTallCtx = ctx2d(liveTall);
   function present(src) {
-    const w = el.view.width, h = el.view.height;
-    if (src.height > src.width) {
-      viewCtx.save();
-      viewCtx.translate(0, h);
-      viewCtx.rotate(-Math.PI / 2);
-      viewCtx.drawImage(src, 0, 0, h, w);
-      viewCtx.restore();
-    } else {
-      viewCtx.drawImage(src, 0, 0, w, h);
-    }
+    viewCtx.drawImage(src, 0, 0, el.view.width, el.view.height);
   }
 
   /* ------------------------------------------------------------- video */
