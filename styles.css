@@ -551,10 +551,15 @@ body:not(.v) .dock { margin-top: auto; }
   body:not(.v) .cam-slot { align-self: flex-start; margin: 4px 0 auto; }
 }
 body.v .below {
-  display: flex;
+  display: grid;
+  grid-template-areas:
+    '.    .   arrows'
+    'play cap video';
   align-items: center;
+  justify-items: center;
   justify-content: center;
-  gap: 30px;
+  column-gap: 30px;
+  row-gap: 16px;
   margin-bottom: 14px; /* room for the captions */
 }
 @media (orientation: portrait) {
@@ -630,9 +635,11 @@ body:not(.v) .side { display: flex; }
 }
 .arrow-btn svg { width: 46%; height: 46%; fill: currentColor; }
 .arrow-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
-/* vertical layout: arrows sit above-right of Capture, Video under them */
-.below-right { display: flex; flex-direction: column; align-items: center; gap: 14px; }
-.below .arrow-pair { flex-direction: row; }
+/* vertical layout: Play | Capture | Video in one line, ▲ ▼ stacked above Video */
+.below #rollBtn2 { grid-area: play; }
+.below #shutterV { grid-area: cap; }
+.below #modeBtn2 { grid-area: video; }
+.below .arrow-pair { grid-area: arrows; }
 .big-mode {
   position: relative;
   width: 52px;

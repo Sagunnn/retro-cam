@@ -45,7 +45,7 @@ CNAME           custom domain for GitHub Pages
   Bluetooth selfie remotes. iPhone Safari doesn't let websites use the volume buttons.
 - **▲ / ▼** change the look: Y2K, Warm, CCD, B&W. You can also swipe across the screen. Extra ▲ ▼
   and Play buttons sit next to the camera: horizontal = arrows above the right-edge capture button
-  and Play on the left; vertical = Play left of Capture, arrows above-right with Video under them.
+  and Play on the left; vertical = Play, Capture and Video in one row, with the arrows stacked above Video.
 - **Save** (download arrow in the row of toggles) opens the film roll: tick the shots you want, then
   **Save to Photos** (share sheet → *Save Images*). Select all / Delete are there too.
 - **▶ Playback:** shows your newest shot on the camera's screen; **▼** goes to older shots, **▲** to
