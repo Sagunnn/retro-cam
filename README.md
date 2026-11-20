@@ -53,7 +53,7 @@ CNAME           custom domain for GitHub Pages
   newer ones (or swipe). **Save** puts the shot on screen into Photos (share sheet → *Save Image*);
   Tapping the photo, or the **Full** button outside the camera (under it in vertical mode, next to
   Play in horizontal mode), zooms the camera's screen up to full screen: swipe sideways through every
-  shot, **Save** the one you're on, **✕** zooms back down. Full works outside playback too (newest shot).
+  shot, **Save** or **Delete** the one you're on, **✕** zooms back down. Full works outside playback too (newest shot).
   **All** opens the film roll, where you tap shots to select several and save or delete them
   together. Press ▶ or the shutter to go back to shooting.
 - **Video:** the small button with the red dot on the top edge (the camera button below it when
@@ -62,7 +62,8 @@ CNAME           custom domain for GitHub Pages
   60 s). Video gets the same look and date stamp.
 - **Camera** (next to Full): full-screen camera mode. The live picture fills the screen on the left
   (rendered at twice the size) with only Play, ▲ ▼ and a capture button on the right, plus a button
-  to leave. Review, playback and the arrows work as usual. Upright, the controls run along the bottom.
+  to leave, flip camera and (with the selfie camera) Lens. Review, playback and the arrows work as
+  usual. Upright, the controls run along the bottom.
 - **Wide**: rear camera → the phone's ultra-wide (0.5×) lens, found by its name (iPhone: "Back Ultra
   Wide Camera"). Selfie camera → the front sensor's full 4:3 picture instead of the 16:9 crop (about a
   third wider side to side with the phone upright; Safari doesn't allow zooming the front camera below

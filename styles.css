@@ -352,7 +352,7 @@ body[data-color='clear'] .shell {
   grid-template-areas:
     'tag    close'
     'screen screen'
-    '.      save';
+    'del    save';
   gap: 12px;
 }
 @container (orientation: landscape) {
@@ -363,7 +363,7 @@ body[data-color='clear'] .shell {
     grid-template-areas:
       'tag screen close'
       '.   screen .'
-      '.   screen save';
+      'del screen save';
   }
   .viewer-save { padding: 0 16px; }
 }
@@ -438,6 +438,19 @@ body[data-color='clear'] .shell {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 .viewer-x svg { width: 46%; height: 46%; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
+.viewer-del {
+  grid-area: del;
+  justify-self: start;
+  align-self: end;
+  height: 42px;
+  padding: 0 18px;
+  border-radius: 99px;
+  font: 700 15px/1 var(--sans);
+  color: #ff6b5e;
+  background: #1d1d1f;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+.viewer-del:active { transform: scale(0.95); }
 .viewer-save {
   grid-area: save;
   justify-self: end;
@@ -590,6 +603,16 @@ body.v .full-row { gap: 22px; }
 }
 .fs-side { display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 12px; }
 .fs-exit { width: 40px; height: 40px; }
+.fs-top { display: flex; gap: 8px; }
+.fs-top .lens-btn svg { width: 54%; height: 54%; }
+/* full-screen camera + selfie + Lens: show the turned camera (its front) instead of the live picture */
+.fs-view > .camera { display: none; }
+body.fullcam.lens-view .fs-view > .camera { display: block; }
+body.fullcam.lens-view .fs-view > .lcd { display: none; }
+/* …lined up with the phone's real selfie camera: left edge sideways, top edge upright */
+body.fullcam:not(.v) .fs-view > .camera { justify-self: start; }
+body.fullcam.v .fs-view > .camera { align-self: start; }
+.fs-exit.flip-btn svg { width: 52%; height: 52%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 /* phone upright (vertical layout): controls along the bottom instead */
 body.v .fscam { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
 body.v .fs-side { flex-direction: row; justify-content: space-around; }
@@ -672,7 +695,9 @@ body.v .below {
 }
 body:not(.v) .side { display: flex; }
 .side-r { right: calc(var(--pr) + 22px); top: 50%; transform: translateY(-50%); }
-.side-l { left: calc(var(--pl) + 22px); bottom: calc(var(--pb) + 88px); flex-direction: row-reverse; gap: 18px; } /* Play, then Lens beside it */
+/* Play, Lens/Wide, Full, Camera: compact, and raised clear of the option rows below */
+.side-l { left: calc(var(--pl) + 22px); bottom: calc(var(--pb) + 126px); flex-direction: row-reverse; gap: 12px; }
+.side-l .big-mode { width: 44px; height: 44px; }
 
 /* ▲ ▼ outside the camera (same job as the camera's own arrows) */
 .arrow-pair {

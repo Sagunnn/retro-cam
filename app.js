@@ -705,8 +705,16 @@
   function setFullCam(on) {
     fullCam = on;
     const fs = $('fscam');
-    if (on) { $('fsView').appendChild(el.lcd); fs.hidden = false; }
-    else { document.querySelector('.bezel').appendChild(el.lcd); fs.hidden = true; }
+    const camera = $('camera');
+    if (on) {
+      $('fsView').appendChild(el.lcd);
+      $('fsView').appendChild(camera); // shown only for selfie + Lens (turned to its front)
+      fs.hidden = false;
+    } else {
+      document.querySelector('.bezel').appendChild(el.lcd);
+      document.querySelector('.cam-slot').appendChild(camera);
+      fs.hidden = true;
+    }
     document.body.classList.toggle('fullcam', on);
     fitView();
     resetWatchdog();
@@ -1443,6 +1451,32 @@
       if (slideIndex === i) v.play().catch(() => {}); else v.pause();
     });
   }
+  async function viewerDelete() {
+    const i = viewer.index;
+    const rec = viewer.list[i];
+    if (!rec || !confirm('Delete this shot? This can’t be undone.')) return;
+    press();
+    await roll.del(rec.id).catch(() => {});
+    viewer.list.splice(i, 1); // same list as playback when opened from there
+    const slide = el.viewerTrack.children[i];
+    const v = slide && slide.querySelector('video');
+    if (v) v.pause();
+    if (slide) slide.remove();
+    const [url] = viewer.urls.splice(i, 1);
+    if (url) URL.revokeObjectURL(url);
+    await syncRoll();
+    if (!viewer.list.length) {
+      closeViewerNow();
+      if (lcdShow.mode === 'play') exitPlay();
+      lcdMsg('ROLL EMPTY');
+      return;
+    }
+    viewer.index = Math.min(i, viewer.list.length - 1);
+    el.viewerTrack.scrollLeft = viewer.index * el.viewerTrack.clientWidth;
+    viewerSync();
+    if (lcdShow.list === viewer.list) lcdShow.index = Math.min(lcdShow.index, viewer.list.length - 1);
+    toast('Deleted.');
+  }
   function closeViewerNow() {
     el.viewer.hidden = true;
     el.viewerTrack.querySelectorAll('video').forEach((v) => v.pause());
@@ -1708,6 +1742,7 @@
       openViewer(list, 0);
     }));
     el.viewerClose.addEventListener('click', () => { press(); closeViewer(); });
+    $('viewerDel').addEventListener('click', viewerDelete);
     el.viewerSave.addEventListener('click', () => {
       const rec = viewer.list[viewer.index];
       if (rec) saveRecords([rec]);
