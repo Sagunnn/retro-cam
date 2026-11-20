@@ -16,7 +16,7 @@
     filterPrev: $('filterPrev'), filterNext: $('filterNext'),
     muteBtn: $('muteBtn'), installBtn: $('installBtn'), iosTip: $('iosTip'), iosTipClose: $('iosTipClose'),
     screenFlash: $('screenFlash'),
-    modeBtn: $('modeBtn'), hudRec: $('hudRec'), hudRecText: $('hudRecText'), led: $('led'),
+    modeBtn: $('modeBtn'), shutter2: $('shutter2'), modeBtn2: $('modeBtn2'), hudRec: $('hudRec'), hudRecText: $('hudRecText'), led: $('led'),
     downloadLink: $('downloadLink'),
     rollSheet: $('rollSheet'), rollGrid: $('rollGrid'), rollCount: $('rollCount'), rollEmpty: $('rollEmpty'),
     closeRollBtn: $('closeRollBtn'), selectAllBtn: $('selectAllBtn'),
@@ -570,15 +570,36 @@
       processPixels(recCtx, rw, rh, f, Math.max(rw, rh) / 1792);
       bloom(recCanvas, recCtx, f.bloom);
       if (state.date) drawDateStamp(recCtx, { x: 0, y: 0, w: rw, h: rh }, dateString());
-      viewCtx.drawImage(recCanvas, 0, 0, el.view.width, el.view.height);
+      present(recCanvas);
       updateRecClock();
       return;
     }
-    drawCover(viewCtx, el.view.width, el.view.height, v, v.videoWidth, v.videoHeight, state.mirror, turn);
-    develop(el.view, viewCtx, {
+    // Upright phone: develop a portrait picture, then show it on the sideways-turned screen.
+    const target = VERTICAL.matches ? liveTall : el.view;
+    const tctx = VERTICAL.matches ? liveTallCtx : viewCtx;
+    drawCover(tctx, target.width, target.height, v, v.videoWidth, v.videoHeight, state.mirror, turn);
+    develop(target, tctx, {
       filter: state.filter, frame: state.mode === 'video' ? 'none' : state.frame, date: state.date,
       frameNo: state.frameNo + 1, when: new Date(), live: true,
     });
+    if (VERTICAL.matches) present(liveTall);
+  }
+
+  // The LCD canvas is always 320×160 because the whole camera (screen included) is turned 90°
+  // when the phone is upright. Portrait pictures are drawn a quarter-turn back so they read upright.
+  const liveTall = makeCanvas(160, 320);
+  const liveTallCtx = ctx2d(liveTall);
+  function present(src) {
+    const w = el.view.width, h = el.view.height;
+    if (src.height > src.width) {
+      viewCtx.save();
+      viewCtx.translate(0, h);
+      viewCtx.rotate(-Math.PI / 2);
+      viewCtx.drawImage(src, 0, 0, h, w);
+      viewCtx.restore();
+    } else {
+      viewCtx.drawImage(src, 0, 0, w, h);
+    }
   }
 
   /* ------------------------------------------------------------- video */
@@ -680,7 +701,7 @@
   }
   function startLoop() { if (!rafId) rafId = requestAnimationFrame(loop); }
   function fitView() {
-    const [w, h] = shape(320, 160);
+    const w = 320, h = 160;
     if (el.view.width !== w || el.view.height !== h) { el.view.width = w; el.view.height = h; }
   }
 
@@ -1230,6 +1251,10 @@
     el.hudRec.classList.toggle('rec', state.recording);
     if (!state.recording) el.hudRecText.textContent = 'STBY';
     el.shutterBtn.classList.toggle('recording', state.recording);
+    el.shutter2.classList.toggle('recording', state.recording);
+    el.shutter2.setAttribute('aria-label', video ? (state.recording ? 'Stop recording' : 'Start recording') : 'Take photo');
+    el.modeBtn2.setAttribute('aria-pressed', String(video));
+    el.modeBtn2.setAttribute('aria-label', video ? 'Video mode on' : 'Video mode off');
     el.shutterBtn.setAttribute('aria-label', video ? (state.recording ? 'Stop recording' : 'Start recording') : 'Take photo');
     el.flashBtn.setAttribute('aria-pressed', String(state.flash));
     el.dateBtn.setAttribute('aria-pressed', String(state.date));
@@ -1314,6 +1339,8 @@
   function bind() {
     el.shutterBtn.addEventListener('click', shoot);
     el.shutterBtn.addEventListener('pointerdown', () => { audio(); });
+    el.shutter2.addEventListener('click', shoot);
+    el.shutter2.addEventListener('pointerdown', () => { audio(); });
     el.lcd.addEventListener('pointerdown', () => { audio(); });
     el.flipBtn.addEventListener('click', flipCamera);
     el.flashBtn.addEventListener('click', () => {
@@ -1365,6 +1392,7 @@
     el.saveSelBtn.addEventListener('click', saveSelected);
     el.deleteSelBtn.addEventListener('click', deleteSelected);
     el.modeBtn.addEventListener('click', () => { press(); setMode(state.mode === 'video' ? 'photo' : 'video'); });
+    el.modeBtn2.addEventListener('click', () => { press(); setMode(state.mode === 'video' ? 'photo' : 'video'); });
 
     el.retryBtn.addEventListener('click', () => { press(); startCamera(); });
     el.nativeInput.addEventListener('change', () => shootFromFile(el.nativeInput.files && el.nativeInput.files[0]));

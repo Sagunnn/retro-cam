@@ -18,7 +18,7 @@
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 
-  <link rel="stylesheet" href="styles.css?v=5ffc7edb5e">
+  <link rel="stylesheet" href="styles.css?v=391ca94bdd">
 </head>
 <body data-color="yellow">
   <video id="video" playsinline muted autoplay aria-hidden="true"></video>
@@ -27,6 +27,7 @@
   <div class="app" id="app">
     <main class="stage">
       <!-- the camera, back view -->
+      <div class="cam-slot">
       <div class="camera" id="camera">
         <div class="shell">
         <div class="ovf" aria-hidden="true"></div>
@@ -57,8 +58,15 @@
           </div>
           <button class="shutter" id="shutterBtn" aria-label="Take photo"><span></span></button>
           <button class="rb play" id="rollBtn" aria-label="Film roll"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5v11l9-5.5z"/></svg></button>
-          <button class="mode" id="modeBtn" aria-label="Video mode" aria-pressed="false"><i></i><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="13" height="11" rx="2"/><path d="m15.5 10.5 6-3.5v10l-6-3.5z"/></svg></button>
+          <button class="mode" id="modeBtn" aria-label="Video mode" aria-pressed="false"><i></i></button>
         </div>
+      </div>
+      </div>
+
+      <!-- upright phone: the camera is turned on its side, so capture + video mode sit below it -->
+      <div class="below">
+        <button class="big-shutter" id="shutter2" aria-label="Take photo"><span></span></button>
+        <button class="big-mode" id="modeBtn2" aria-label="Video mode" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="13" height="11" rx="2"/><path d="m15.5 10.5 6-3.5v10l-6-3.5z"/></svg></button>
       </div>
 
       <div class="dock">
@@ -139,6 +147,6 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <script src="app.js?v=22cf8b823b" defer></script>
+  <script src="app.js?v=9f4c4efc6f" defer></script>
 </body>
 </html>
