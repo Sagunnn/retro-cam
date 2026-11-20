@@ -58,6 +58,10 @@ CNAME           custom domain for GitHub Pages
   upright) switches between photo and video.
   In video mode the shutter starts and stops recording (lo-fi 640×320, 24 fps, with sound, up to
   60 s). Video gets the same look and date stamp.
+- **Lens** (appears with the selfie camera): the camera turns round to show its front (lens,
+  viewfinder window, flash window, rainbow band), so you don't see yourself, just like holding the
+  real thing. Tap the camera's front or a capture button to shoot; it turns back to show the photo
+  for the 5-second review, then back to the lens. The flash window glows red while recording.
 - **HQ** (in the option row) switches from the vintage look to high quality: full camera resolution
   (up to 3840×1920), the chosen look's colours without grain or JPEG crunch, saved at high quality.
   Video goes to 960×480. Off by default.

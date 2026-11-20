@@ -82,7 +82,8 @@
     color: COLOR_NAMES[store.get('color', 'yellow')] ? store.get('color', 'yellow') : 'yellow',
     filter: Math.min(Math.max(0, store.get('filter', 0) | 0), FILTERS.length - 1),
     frame: FRAMES.includes(store.get('frame', 'film')) ? store.get('frame', 'film') : 'film',
-    hq: !!store.get('hq', false), // false = vintage (lo-fi 1.6 MP), true = high quality
+    hq: !!store.get('hq', false),
+    lensOnly: !!store.get('lensOnly', false), // selfie camera: show the camera's front (lens) instead of its screen // false = vintage (lo-fi 1.6 MP), true = high quality
     date: !!store.get('date', true),
     flash: !!store.get('flash', false),
     muted: !!store.get('muted', false),
@@ -1000,6 +1001,10 @@
       el.blink.classList.remove('go');
       void el.blink.offsetWidth;
       el.blink.classList.add('go');
+      const fl = document.querySelector('.f-flash');
+      fl.classList.remove('snap');
+      void fl.offsetWidth;
+      fl.classList.add('snap');
       state.paused = true;
       const shot = await developPhoto(grab, grab.width, grab.height, state.mirror, needsTurn(grab.width, grab.height));
       grab.width = grab.height = 1;
@@ -1266,6 +1271,7 @@
     lcdShow.mode = 'review';
     el.pb.classList.add('review');
     showOnLcd(rec, '');
+    updateHud(); // Lens view: turn round to show the shot
     clearTimeout(lcdShow.timer);
     lcdShow.timer = setTimeout(endReview, REVIEW_MS);
   }
@@ -1446,6 +1452,16 @@
     if (!state.recording) el.hudRecText.textContent = 'STBY';
     el.shutterBtn.classList.toggle('recording', state.recording);
     el.rollBtn2.dataset.on = String(lcdShow.mode === 'play');
+    // selfie camera + "Lens": the camera turns round to show its front (not while browsing shots)
+    const selfie = state.facing === 'user';
+    document.body.classList.toggle('selfie', selfie);
+    // (the 5-second review after a shot and playback turn it back so you can see the photo)
+    document.body.classList.toggle('lens-view', state.lensOnly && selfie && lcdShow.mode === 'live');
+    document.body.classList.toggle('rec', state.recording);
+    document.querySelectorAll('.lens-btn').forEach((b) => {
+      b.setAttribute('aria-pressed', String(state.lensOnly));
+      b.setAttribute('aria-label', state.lensOnly ? 'Lens view on (tap to see the screen)' : 'Lens view off (tap to see only the lens)');
+    });
     $('rollBtn3').dataset.on = String(lcdShow.mode === 'play');
     for (const b of [el.shutterV, el.shutterH]) {
       b.classList.toggle('recording', state.recording);
@@ -1540,6 +1556,13 @@
       b.addEventListener('pointerdown', () => { audio(); });
     }
     el.saveRollBtn.addEventListener('click', openRoll);
+    document.querySelectorAll('.lens-btn').forEach((b) => b.addEventListener('click', () => {
+      press();
+      state.lensOnly = !state.lensOnly;
+      store.set('lensOnly', state.lensOnly);
+      updateHud();
+    }));
+    $('front').addEventListener('click', shoot);
     el.hqBtn.addEventListener('click', () => {
       press();
       state.hq = !state.hq;

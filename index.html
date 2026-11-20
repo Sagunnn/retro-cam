@@ -18,7 +18,7 @@
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 
-  <link rel="stylesheet" href="styles.css?v=14aa6521d4">
+  <link rel="stylesheet" href="styles.css?v=9391b941c3">
 </head>
 <body data-color="yellow">
 
@@ -28,6 +28,7 @@
       <!-- the camera, back view -->
       <div class="cam-slot">
       <div class="camera" id="camera">
+        <div class="flipper">
         <div class="shell">
         <div class="ovf" aria-hidden="true"></div>
         <span class="led" id="led" aria-hidden="true"></span>
@@ -70,11 +71,21 @@
           <button class="rb play" id="rollBtn" aria-label="Film roll"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5v11l9-5.5z"/></svg></button>
           <button class="mode" id="modeBtn" aria-label="Video mode" aria-pressed="false"><i></i></button>
         </div>
+        <!-- the camera's front: shown instead of the screen when "Lens" is on with the selfie camera -->
+        <div class="front" id="front" role="button" aria-label="Take photo">
+          <span class="f-top f-top1"></span><span class="f-top f-top2"></span>
+          <span class="f-flash"></span>
+          <span class="f-brand">Retro <em>cam</em></span>
+          <span class="f-vf"><i></i></span>
+          <span class="f-lens"><i></i></span>
+        </div>
+        </div>
       </div>
       </div>
 
       <!-- vertical layout: the camera's left side runs off-screen, so playback + video mode sit below -->
       <div class="below">
+        <button class="big-mode lens-btn" aria-pressed="false" aria-label="Lens view" data-label="Lens"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3.5"/><circle cx="10.6" cy="10.6" r="1" fill="currentColor"/></svg></button>
         <button class="big-mode" id="rollBtn2" aria-label="Playback" data-label="Play"><svg class="fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg></button>
         <button class="alt-shutter" id="shutterV" aria-label="Take photo" data-label="Capture"><span></span></button>
         <div class="arrow-pair">
@@ -95,6 +106,7 @@
         <button class="tg layout-btn" aria-pressed="false" aria-label="Vertical layout"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M3.5 9.5a8.5 8.5 0 0 1 2-4m15 9a8.5 8.5 0 0 1-2 4"/><path d="m3 6 2.5-.5L6 8m15 10-2.5.5L18 16"/></svg></button>
       </div>
       <div class="side side-l">
+        <button class="big-mode lens-btn" aria-pressed="false" aria-label="Lens view" data-label="Lens"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3.5"/><circle cx="10.6" cy="10.6" r="1" fill="currentColor"/></svg></button>
         <button class="big-mode" id="rollBtn3" aria-label="Playback" data-label="Play"><svg class="fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg></button>
       </div>
 
@@ -195,6 +207,6 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <script src="app.js?v=3c5b75d925" defer></script>
+  <script src="app.js?v=79f4bcc51b" defer></script>
 </body>
 </html>

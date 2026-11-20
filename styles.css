@@ -120,7 +120,18 @@ body.flip .app {
   container-type: inline-size;
   --u: 1cqw; /* body unit: 1% of the body's long side */
 }
+/* the body can turn over (3D) to show its front when "Lens" is on with the selfie camera */
+.camera { perspective: calc(260 * var(--u, 1cqw)); }
+.flipper {
+  position: relative;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  transition: transform 0.7s cubic-bezier(0.3, 0.1, 0.2, 1);
+}
+body.lens-view .flipper { transform: rotateY(180deg); }
 .shell {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
   position: relative;
   aspect-ratio: 58 / 24.5; /* the real body's proportions */
   display: grid;
@@ -578,7 +589,7 @@ body:not(.v) .dock { margin-top: auto; }
 body.v .below {
   display: grid;
   grid-template-areas:
-    '.    .   arrows'
+    'lens .   arrows'
     'play cap video';
   align-items: center;
   justify-items: center;
@@ -634,7 +645,7 @@ body.v .below {
 }
 body:not(.v) .side { display: flex; }
 .side-r { right: calc(var(--pr) + 22px); top: 50%; transform: translateY(-50%); }
-.side-l { left: calc(var(--pl) + 22px); bottom: calc(var(--pb) + 88px); }
+.side-l { left: calc(var(--pl) + 22px); bottom: calc(var(--pb) + 88px); flex-direction: row-reverse; gap: 18px; } /* Play, then Lens beside it */
 
 /* ▲ ▼ outside the camera (same job as the camera's own arrows) */
 .arrow-pair {
@@ -662,6 +673,121 @@ body:not(.v) .side { display: flex; }
 .arrow-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
 /* vertical layout: Play | Capture | Video in one line, ▲ ▼ stacked above Video */
 .below #rollBtn2 { grid-area: play; }
+.below .lens-btn { grid-area: lens; }
+.lens-btn { display: none !important; }
+body.selfie .lens-btn { display: grid !important; }
+.lens-btn svg { fill: none; stroke: currentColor; stroke-width: 1.8; }
+.lens-btn[aria-pressed='true'] { color: #ffd23a; }
+
+/* ---------------------------------------------------------------- the front */
+.front {
+  position: absolute;
+  inset: 0;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: rotateY(180deg);
+  border-radius: calc(2.8 * var(--u));
+  cursor: pointer;
+  background:
+    /* diagonal rainbow band, like the blind-box designs */
+    linear-gradient(116deg, transparent 0 55%,
+      #e8433a 55% 59%, #f39c2f 59% 63%, #f5e042 63% 67%, #46c06b 67% 71%, #3fb4e6 71% 75%,
+      transparent 75%),
+    linear-gradient(180deg, var(--body-hi) 0%, var(--body) 12%, var(--body) 84%, var(--body-lo) 100%);
+  box-shadow:
+    inset 0 calc(0.4 * var(--u)) 0 rgba(255, 255, 255, 0.45),
+    inset 0 calc(-0.6 * var(--u)) 0 rgba(0, 0, 0, 0.1),
+    0 calc(1 * var(--u)) 0 var(--body-edge),
+    0 calc(4 * var(--u)) calc(5 * var(--u)) calc(-2.5 * var(--u)) rgba(60, 40, 0, 0.45);
+}
+.front::before {
+  content: '';
+  position: absolute;
+  inset: calc(1 * var(--u));
+  border-radius: calc(1.9 * var(--u));
+  border: calc(0.28 * var(--u)) solid var(--rim);
+  pointer-events: none;
+}
+.f-top {
+  position: absolute;
+  top: calc(-1.6 * var(--u));
+  width: calc(8 * var(--u));
+  height: calc(2.2 * var(--u));
+  border-radius: calc(1 * var(--u)) calc(1 * var(--u)) 0 0;
+  background: linear-gradient(180deg, #6b6d72, #3a3b3f 60%, #2a2b2e);
+  box-shadow: inset 0 calc(0.25 * var(--u)) 0 rgba(255, 255, 255, 0.3);
+}
+.f-top1 { left: calc(20 * var(--u)); }
+.f-top2 { left: calc(42 * var(--u)); }
+.f-flash {
+  position: absolute;
+  left: calc(8.5 * var(--u));
+  top: calc(9 * var(--u));
+  width: calc(12 * var(--u));
+  height: calc(5.4 * var(--u));
+  border-radius: calc(2.7 * var(--u));
+  background: radial-gradient(ellipse at 50% 40%, #fff8c8, #e9d36a 55%, #b9a23c);
+  box-shadow: 0 0 0 calc(0.9 * var(--u)) #161617, inset 0 calc(0.3 * var(--u)) calc(0.5 * var(--u)) rgba(255, 255, 255, 0.7);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+body.rec .f-flash { background: radial-gradient(ellipse at 50% 40%, #ffd1c8, #ff3b2b 55%, #a8160c); box-shadow: 0 0 0 calc(0.9 * var(--u)) #161617, 0 0 calc(3 * var(--u)) rgba(255, 60, 40, 0.8); animation: recblink 1s steps(2) infinite; }
+.f-flash.snap { animation: fsnap 0.35s ease-out; }
+@keyframes fsnap { 0% { background: #fff; box-shadow: 0 0 0 calc(0.9 * var(--u)) #161617, 0 0 calc(8 * var(--u)) #fff; } }
+.f-brand {
+  position: absolute;
+  left: calc(27 * var(--u));
+  top: calc(8.4 * var(--u));
+  font: 900 calc(4.6 * var(--u))/1 'Arial Black', 'Helvetica Neue', Arial, sans-serif;
+  letter-spacing: -0.02em;
+  color: #e2352a;
+}
+.f-brand em {
+  font: italic 400 calc(5 * var(--u))/1 'Snell Roundhand', 'Brush Script MT', Georgia, serif;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+.f-vf {
+  position: absolute;
+  right: calc(3.4 * var(--u));
+  top: calc(3.6 * var(--u));
+  width: calc(15 * var(--u));
+  height: calc(11 * var(--u));
+  padding: calc(2.4 * var(--u)) calc(2.8 * var(--u));
+  border-radius: calc(1.2 * var(--u));
+  background: linear-gradient(160deg, #2c2d31, #121214);
+  box-shadow: inset 0 calc(0.3 * var(--u)) 0 rgba(255, 255, 255, 0.12);
+}
+.f-vf i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: calc(0.5 * var(--u));
+  background: linear-gradient(160deg, #f4f7fa, #b8c1cb 60%, #8d97a3);
+}
+.f-lens {
+  position: absolute;
+  left: 56%;
+  top: 64%;
+  width: calc(19 * var(--u));
+  height: calc(19 * var(--u));
+  margin: calc(-9.5 * var(--u)) 0 0 calc(-9.5 * var(--u));
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(from 0deg, #1d1d1f 0 4deg, #262628 4deg 8deg);
+  box-shadow: 0 calc(0.8 * var(--u)) calc(1.6 * var(--u)) rgba(0, 0, 0, 0.45), inset 0 0 0 calc(1.2 * var(--u)) #111, inset 0 calc(0.4 * var(--u)) 0 calc(1.2 * var(--u)) rgba(255, 255, 255, 0.08);
+  display: grid;
+  place-items: center;
+}
+.f-lens i {
+  width: 52%;
+  height: 52%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 36% 32%, rgba(255, 255, 255, 0.85) 0 7%, transparent 9%),
+    radial-gradient(circle at 60% 64%, rgba(120, 170, 255, 0.5) 0 6%, transparent 8%),
+    radial-gradient(circle at 50% 50%, #1e3354 0%, #0b1424 55%, #04070c 100%);
+  box-shadow: 0 0 0 calc(1 * var(--u)) #0d0d0e, 0 0 0 calc(1.4 * var(--u)) #3a3a3d;
+}
 .below #shutterV { grid-area: cap; }
 .below #modeBtn2 { grid-area: video; }
 .below .arrow-pair { grid-area: arrows; }
