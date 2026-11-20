@@ -518,6 +518,7 @@
     rafId = requestAnimationFrame(loop);
     if (state.paused || now - lastFrame < 1000 / LIVE_FPS - 2) return;
     const v = el.video;
+    if (watchdog(v, now)) return;
     if (v.readyState < 2 || !v.videoWidth) return;
     lastFrame = now;
     const turn = needsTurn(v.videoWidth, v.videoHeight);
@@ -642,6 +643,26 @@
     if (state.running || state.error === 'busy' || state.error === 'error') startCamera();
   }
   function startLoop() { if (!rafId) rafId = requestAnimationFrame(loop); }
+
+  // iPhone Safari can pause the camera's video (share sheet, notifications, power saving) and
+  // never resume it, which freezes the LCD. If the feed stops moving, nudge it; if it's still
+  // stuck a few seconds later, restart the camera (what flipping the camera used to fix).
+  let lastVideoTime = -1, stalledSince = 0;
+  function watchdog(v, now) {
+    if (v.paused && v.srcObject) v.play().catch(() => {});
+    const t = v.currentTime;
+    if (t !== lastVideoTime) { lastVideoTime = t; stalledSince = 0; return false; }
+    if (!stalledSince) { stalledSince = now; return false; }
+    const stuck = now - stalledSince;
+    if (stuck > 1000) v.play().catch(() => {});
+    if (stuck > 3500 && !state.recording && !state.starting) {
+      stalledSince = 0;
+      startCamera();
+      return true;
+    }
+    return false;
+  }
+  function resetWatchdog() { lastVideoTime = -1; stalledSince = 0; }
   function setLayout(vertical) {
     document.body.classList.toggle('v', vertical);
     document.body.classList.toggle('flip', !vertical && VERTICAL.matches);
@@ -728,6 +749,11 @@
       }
       state.stream = stream;
       state.track = stream.getVideoTracks()[0];
+      resetWatchdog();
+      // the feed was cut off (another app took the camera, etc.): start it again
+      state.track.addEventListener('ended', () => {
+        if (state.stream === stream && state.running && !document.hidden) startCamera();
+      });
       el.video.srcObject = stream;
       await el.video.play().catch(() => {});
       if (!el.video.videoWidth) {
@@ -1185,6 +1211,7 @@
     state.paused = true;
   }
   function hideLcdShow() {
+    resetWatchdog();
     clearTimeout(lcdShow.timer);
     el.pb.hidden = true;
     el.pb.classList.remove('review');
@@ -1263,6 +1290,7 @@
     await renderRoll();
   }
   function closeRoll() {
+    resetWatchdog();
     el.rollSheet.hidden = true;
     gridUrls.forEach((u) => URL.revokeObjectURL(u));
     gridUrls = [];
@@ -1512,6 +1540,9 @@
       }
     });
     window.addEventListener('pagehide', stopCamera);
+    // back from the app switcher / back-forward cache: make sure the camera is live again
+    window.addEventListener('pageshow', () => { if (!state.running && !state.starting && !state.error) startCamera(); });
+    window.addEventListener('focus', () => { if (state.running && el.video.paused) el.video.play().catch(() => {}); });
   }
 
   /* ---------------------------------------------------------- life-size */

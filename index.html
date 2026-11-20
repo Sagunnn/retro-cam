@@ -18,10 +18,9 @@
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 
-  <link rel="stylesheet" href="styles.css?v=b36d3b8007">
+  <link rel="stylesheet" href="styles.css?v=c01447b0b3">
 </head>
 <body data-color="yellow">
-  <video id="video" playsinline muted autoplay aria-hidden="true"></video>
 
   <!-- Always landscape: on a phone held upright the whole app is turned sideways. -->
   <div class="app" id="app">
@@ -35,6 +34,8 @@
 
         <div class="bezel">
           <div class="lcd" id="lcd">
+            <!-- raw camera feed: on screen (under the picture) so iPhone Safari never pauses it -->
+            <video id="video" playsinline muted autoplay aria-hidden="true"></video>
             <canvas id="view" width="320" height="160" aria-label="Viewfinder"></canvas>
             <div class="flash-blink" id="blink"></div>
             <div class="hud" aria-hidden="true">
@@ -165,6 +166,6 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <script src="app.js?v=a8697f9bf1" defer></script>
+  <script src="app.js?v=9ed66c9d3e" defer></script>
 </body>
 </html>
