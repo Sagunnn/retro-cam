@@ -1575,6 +1575,7 @@
       b.setAttribute('aria-label', video ? (state.recording ? 'Stop recording' : 'Start recording') : 'Take photo');
     }
     el.modeBtn2.setAttribute('aria-pressed', String(video));
+    $('fsMode').setAttribute('aria-pressed', String(video));
     el.modeBtn2.setAttribute('aria-label', video ? 'Video mode on' : 'Video mode off');
     el.shutterBtn.setAttribute('aria-label', video ? (state.recording ? 'Stop recording' : 'Start recording') : 'Take photo');
     el.flashBtn.setAttribute('aria-pressed', String(state.flash));
@@ -1789,6 +1790,7 @@
       setLayout(v);
       lcdMsg(v ? 'VERTICAL' : 'HORIZONTAL');
     }));
+    $('fsMode').addEventListener('click', () => { press(); setMode(state.mode === 'video' ? 'photo' : 'video'); });
     el.modeBtn2.addEventListener('click', () => { press(); setMode(state.mode === 'video' ? 'photo' : 'video'); });
 
     el.retryBtn.addEventListener('click', () => { press(); startCamera(); });
