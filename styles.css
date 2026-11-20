@@ -339,18 +339,44 @@ body[data-color='clear'] .shell {
 .pb-zoom svg { width: 55%; height: 55%; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .pb.review .pb-chip, .pb.review .pb-zoom { display: none; }
 
-/* full-screen viewer: the LCD zoomed up to fill the display */
+/* full-screen viewer: the LCD zoomed up to fill the display; buttons in the empty space */
 .viewer {
   position: absolute;
   inset: 0;
   z-index: 60;
-  display: flex;
   padding: calc(var(--pt) + 10px) calc(var(--pr) + 10px) calc(var(--pb) + 10px) calc(var(--pl) + 10px);
   background: #000;
+  container-type: size;
+}
+.viewer-in {
+  /* tall screen: counter + ✕ above the photo, Save below */
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    'tag    close'
+    'screen screen'
+    '.      save';
+  gap: 12px;
+}
+@container (orientation: landscape) {
+  /* wide screen: counter in the left margin, ✕ and Save in the right margin */
+  .viewer-in {
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      'tag screen close'
+      '.   screen .'
+      '.   screen save';
+  }
+  .viewer-save { padding: 0 16px; }
 }
 .viewer-screen {
+  grid-area: screen;
   position: relative;
-  flex: 1;
+  min-width: 0;
+  min-height: 0;
   overflow: hidden;
   border-radius: 14px;
   background: #050505;
@@ -394,40 +420,39 @@ body[data-color='clear'] .shell {
   box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.7);
 }
 .viewer-tag {
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  padding: 4px 8px;
-  border-radius: 5px;
-  background: rgba(0, 0, 0, 0.55);
+  grid-area: tag;
+  align-self: center;
+  justify-self: start;
+  padding: 6px 9px;
+  border-radius: 6px;
+  background: #1d1d1f;
   font: 700 13px/1 var(--mono);
   letter-spacing: 0.05em;
   color: #f2fff7;
+  white-space: nowrap;
 }
 .viewer-x {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 38px;
-  height: 38px;
+  grid-area: close;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: grid;
   place-items: center;
   color: #fff;
-  background: rgba(0, 0, 0, 0.55);
+  background: #1d1d1f;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 .viewer-x svg { width: 46%; height: 46%; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
 .viewer-save {
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
-  height: 40px;
-  padding: 0 20px;
+  grid-area: save;
+  justify-self: end;
+  align-self: end;
+  height: 42px;
+  padding: 0 22px;
   border-radius: 99px;
   font: 700 15px/1 var(--sans);
   color: #111;
   background: #f2efe8;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 .viewer-x:active, .viewer-save:active { transform: scale(0.95); }
 .lcd-state {

@@ -18,7 +18,7 @@
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 
-  <link rel="stylesheet" href="styles.css?v=e72cea5af8">
+  <link rel="stylesheet" href="styles.css?v=14aa6521d4">
 </head>
 <body data-color="yellow">
 
@@ -180,11 +180,14 @@
 
     <!-- full-screen viewer: the camera's screen zoomed up; swipe through every shot -->
     <div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-label="Photos" hidden>
-      <div class="viewer-screen" id="viewerScreen">
-        <div class="viewer-track" id="viewerTrack"></div>
-        <div class="viewer-glass" aria-hidden="true"></div>
+      <!-- the buttons sit in the empty space around the photo, never on top of it -->
+      <div class="viewer-in">
         <span class="viewer-tag" id="viewerTag"></span>
         <button class="viewer-x" id="viewerClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        <div class="viewer-screen" id="viewerScreen">
+          <div class="viewer-track" id="viewerTrack"></div>
+          <div class="viewer-glass" aria-hidden="true"></div>
+        </div>
         <button class="viewer-save" id="viewerSave">Save</button>
       </div>
     </div>
