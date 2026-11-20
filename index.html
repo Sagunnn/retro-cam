@@ -18,7 +18,7 @@
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 
-  <link rel="stylesheet" href="styles.css?v=9391b941c3">
+  <link rel="stylesheet" href="styles.css?v=a514d3c7a6">
 </head>
 <body data-color="yellow">
 
@@ -85,6 +85,7 @@
 
       <!-- vertical layout: the camera's left side runs off-screen, so playback + video mode sit below -->
       <div class="below">
+        <button class="big-mode wide-btn" aria-pressed="false" aria-label="Wide lens" data-label="Wide"><span>0.5×</span></button>
         <button class="big-mode lens-btn" aria-pressed="false" aria-label="Lens view" data-label="Lens"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3.5"/><circle cx="10.6" cy="10.6" r="1" fill="currentColor"/></svg></button>
         <button class="big-mode" id="rollBtn2" aria-label="Playback" data-label="Play"><svg class="fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg></button>
         <button class="alt-shutter" id="shutterV" aria-label="Take photo" data-label="Capture"><span></span></button>
@@ -106,6 +107,7 @@
         <button class="tg layout-btn" aria-pressed="false" aria-label="Vertical layout"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M3.5 9.5a8.5 8.5 0 0 1 2-4m15 9a8.5 8.5 0 0 1-2 4"/><path d="m3 6 2.5-.5L6 8m15 10-2.5.5L18 16"/></svg></button>
       </div>
       <div class="side side-l">
+        <button class="big-mode wide-btn" aria-pressed="false" aria-label="Wide lens" data-label="Wide"><span>0.5×</span></button>
         <button class="big-mode lens-btn" aria-pressed="false" aria-label="Lens view" data-label="Lens"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3.5"/><circle cx="10.6" cy="10.6" r="1" fill="currentColor"/></svg></button>
         <button class="big-mode" id="rollBtn3" aria-label="Playback" data-label="Play"><svg class="fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg></button>
       </div>
@@ -207,6 +209,6 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <script src="app.js?v=79f4bcc51b" defer></script>
+  <script src="app.js?v=19eb8c03e1" defer></script>
 </body>
 </html>

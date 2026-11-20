@@ -579,18 +579,22 @@ body.v .stage { gap: 30px; }
 /* Upright, the iPhone's rear lens is behind the top-right of the screen: the camera sits in
    that corner (4 pt from the edge) so it lines up with the real lens. */
 body.v .cam-slot { align-self: flex-end; margin: 4px -8px auto 0; }
+/* Lens view (selfie camera): sit by the phone's real selfie camera, top-centre when upright */
+body.v.lens-view .cam-slot { align-self: center; margin: 4px 0 auto; }
 body.v .below { margin-top: auto; }
 body:not(.v) .dock { margin-top: auto; }
 /* Horizontal on a phone (held top-to-the-left): the iPhone's rear lens is ~12 mm in from that
    top-left corner, so the camera sits in the corner with its viewfinder over the real lens. */
 @media (pointer: coarse) {
   body:not(.v) .cam-slot { align-self: flex-start; margin: 4px 0 auto; }
+  /* sideways (top to the left) the selfie camera is on the left edge, half way down */
+  body:not(.v).lens-view .cam-slot { margin: auto 0; }
 }
 body.v .below {
   display: grid;
   grid-template-areas:
-    'lens .   arrows'
-    'play cap video';
+    'lens wide arrows'
+    'play cap  video';
   align-items: center;
   justify-items: center;
   justify-content: center;
@@ -674,10 +678,14 @@ body:not(.v) .side { display: flex; }
 /* vertical layout: Play | Capture | Video in one line, ▲ ▼ stacked above Video */
 .below #rollBtn2 { grid-area: play; }
 .below .lens-btn { grid-area: lens; }
+.below .wide-btn { grid-area: wide; }
+body.selfie .wide-btn { display: none !important; } /* the ultra-wide lens is on the back */
+.wide-btn span { font: 800 14px/1 var(--mono); letter-spacing: -0.02em; }
+.big-mode.wide-btn[aria-pressed='true'] { color: #ffd23a; }
 .lens-btn { display: none !important; }
 body.selfie .lens-btn { display: grid !important; }
 .lens-btn svg { fill: none; stroke: currentColor; stroke-width: 1.8; }
-.lens-btn[aria-pressed='true'] { color: #ffd23a; }
+.big-mode.lens-btn[aria-pressed='true'] { color: #ffd23a; }
 
 /* ---------------------------------------------------------------- the front */
 .front {

@@ -83,7 +83,8 @@
     filter: Math.min(Math.max(0, store.get('filter', 0) | 0), FILTERS.length - 1),
     frame: FRAMES.includes(store.get('frame', 'film')) ? store.get('frame', 'film') : 'film',
     hq: !!store.get('hq', false),
-    lensOnly: !!store.get('lensOnly', false), // selfie camera: show the camera's front (lens) instead of its screen // false = vintage (lo-fi 1.6 MP), true = high quality
+    lensOnly: !!store.get('lensOnly', false),
+    wide: !!store.get('wide', false), // rear ultra-wide (0.5×) lens when the phone has one // selfie camera: show the camera's front (lens) instead of its screen // false = vintage (lo-fi 1.6 MP), true = high quality
     date: !!store.get('date', true),
     flash: !!store.get('flash', false),
     muted: !!store.get('muted', false),
@@ -748,6 +749,13 @@
       const video = state.hq
         ? { facingMode: { ideal: state.facing }, width: { ideal: 3840 }, height: { ideal: 2160 } }
         : { facingMode: { ideal: state.facing }, width: { ideal: 1920 }, height: { ideal: 1080 } };
+      // Wide (0.5×): pick the rear ultra-wide camera by name (iPhone: "Back Ultra Wide Camera").
+      state.wideActive = false;
+      if (state.wide && state.facing === 'environment') {
+        const uw = await findUltraWide();
+        if (uw) { delete video.facingMode; video.deviceId = { exact: uw }; state.wideActive = true; }
+        else lcdMsg('NO WIDE', 1200);
+      }
       const get = (audio, v) => navigator.mediaDevices.getUserMedia({ audio, video: v });
       try {
         stream = await get(wantAudio, video);
@@ -797,6 +805,15 @@
     } finally {
       state.starting = false;
     }
+  }
+
+  // Device labels are only filled in once camera permission has been given.
+  async function findUltraWide() {
+    try {
+      const list = await navigator.mediaDevices.enumerateDevices();
+      const cam = list.find((d) => d.kind === 'videoinput' && /ultra\s*wide|0[.,]5|ultrawide/i.test(d.label));
+      return cam ? cam.deviceId : null;
+    } catch { return null; }
   }
 
   async function countCameras() {
@@ -1441,7 +1458,8 @@
     el.hqBtn.setAttribute('aria-pressed', String(state.hq));
     el.hqBtn.setAttribute('aria-label', state.hq ? 'High quality on (tap for vintage)' : 'Vintage quality (tap for high quality)');
     el.hudFlash.toggleAttribute('hidden', !state.flash);
-    el.hudFacing.textContent = state.facing === 'user' ? 'SELFIE' : 'REAR';
+    el.hudFacing.textContent = state.facing === 'user' ? 'SELFIE' : (state.wideActive ? 'REAR 0.5×' : 'REAR');
+    document.querySelectorAll('.wide-btn').forEach((b) => b.setAttribute('aria-pressed', String(state.wide)));
     el.hudCount.textContent = pad(Math.min(999, state.shots), 3);
     const video = state.mode === 'video';
     el.modeBtn.setAttribute('aria-pressed', String(video));
@@ -1563,6 +1581,15 @@
       updateHud();
     }));
     $('front').addEventListener('click', shoot);
+    document.querySelectorAll('.wide-btn').forEach((b) => b.addEventListener('click', () => {
+      press();
+      state.wide = !state.wide;
+      store.set('wide', state.wide);
+      updateHud();
+      lcdMsg(state.wide ? '0.5×' : '1×');
+      if (state.recording) stopRecording();
+      if (state.running) startCamera();
+    }));
     el.hqBtn.addEventListener('click', () => {
       press();
       state.hq = !state.hq;
