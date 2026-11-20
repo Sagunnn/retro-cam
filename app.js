@@ -16,7 +16,7 @@
     filterPrev: $('filterPrev'), filterNext: $('filterNext'),
     muteBtn: $('muteBtn'), installBtn: $('installBtn'), iosTip: $('iosTip'), iosTipClose: $('iosTipClose'),
     screenFlash: $('screenFlash'),
-    modeBtn: $('modeBtn'), rollBtn2: $('rollBtn2'), modeBtn2: $('modeBtn2'), layoutBtn: $('layoutBtn'),
+    modeBtn: $('modeBtn'), rollBtn2: $('rollBtn2'), shutterV: $('shutterV'), shutterH: $('shutterH'), saveRollBtn: $('saveRollBtn'), modeBtn2: $('modeBtn2'), layoutBtn: $('layoutBtn'),
     pb: $('pb'), pbImg: $('pbImg'), pbVid: $('pbVid'), pbTag: $('pbTag'), pbAll: $('pbAll'), pbSave: $('pbSave'), hudRec: $('hudRec'), hudRecText: $('hudRecText'), led: $('led'),
     downloadLink: $('downloadLink'),
     rollSheet: $('rollSheet'), rollGrid: $('rollGrid'), rollCount: $('rollCount'), rollEmpty: $('rollEmpty'),
@@ -1288,6 +1288,10 @@
     if (!state.recording) el.hudRecText.textContent = 'STBY';
     el.shutterBtn.classList.toggle('recording', state.recording);
     el.rollBtn2.dataset.on = String(lcdShow.mode === 'play');
+    for (const b of [el.shutterV, el.shutterH]) {
+      b.classList.toggle('recording', state.recording);
+      b.setAttribute('aria-label', video ? (state.recording ? 'Stop recording' : 'Start recording') : 'Take photo');
+    }
     el.modeBtn2.setAttribute('aria-pressed', String(video));
     el.modeBtn2.setAttribute('aria-label', video ? 'Video mode on' : 'Video mode off');
     el.shutterBtn.setAttribute('aria-label', video ? (state.recording ? 'Stop recording' : 'Start recording') : 'Take photo');
@@ -1372,8 +1376,11 @@
 
   /* ------------------------------------------------------------- wiring */
   function bind() {
-    el.shutterBtn.addEventListener('click', shoot);
-    el.shutterBtn.addEventListener('pointerdown', () => { audio(); });
+    for (const b of [el.shutterBtn, el.shutterV, el.shutterH]) {
+      b.addEventListener('click', shoot);
+      b.addEventListener('pointerdown', () => { audio(); });
+    }
+    el.saveRollBtn.addEventListener('click', openRoll);
     el.lcd.addEventListener('pointerdown', () => { audio(); });
     el.flipBtn.addEventListener('click', flipCamera);
     el.flashBtn.addEventListener('click', () => {

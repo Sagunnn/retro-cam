@@ -38,11 +38,14 @@ CNAME           custom domain for GitHub Pages
   Photos and videos always come out wide (1792×896 photo area, 640×320 video), matching the screen.
 - **Light** under the viewfinder: green in photo mode, red in video mode, blinking while recording.
   The red dot on the top-edge button lights up in video mode too.
-- **Shutter:** the big red button on the body, or tap the screen. After a shot it stays on the
+- **Shutter:** the big red button on the body, the extra capture button (under the camera in vertical
+  mode, at the right edge in horizontal mode), or tap the screen. After a shot it stays on the
   screen for 5 seconds; press the shutter again (or tap the screen) to go straight back to the
   live view. Every shot is kept in the film roll. Space/Enter works on a computer, and so do
   Bluetooth selfie remotes. iPhone Safari doesn't let websites use the volume buttons.
 - **▲ / ▼** change the look: Y2K, Warm, CCD, B&W. You can also swipe across the screen.
+- **Save** (download arrow in the row of toggles) opens the film roll: tick the shots you want, then
+  **Save to Photos** (share sheet → *Save Images*). Select all / Delete are there too.
 - **▶ Playback:** shows your newest shot on the camera's screen; **▼** goes to older shots, **▲** to
   newer ones (or swipe). **Save** puts the shot on screen into Photos (share sheet → *Save Image*);
   **All** opens the film roll, where you tap shots to select several and save or delete them
