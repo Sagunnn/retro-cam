@@ -1411,6 +1411,7 @@
     if (!state.recording) el.hudRecText.textContent = 'STBY';
     el.shutterBtn.classList.toggle('recording', state.recording);
     el.rollBtn2.dataset.on = String(lcdShow.mode === 'play');
+    $('rollBtn3').dataset.on = String(lcdShow.mode === 'play');
     for (const b of [el.shutterV, el.shutterH]) {
       b.classList.toggle('recording', state.recording);
       b.setAttribute('aria-label', video ? (state.recording ? 'Stop recording' : 'Start recording') : 'Take photo');
@@ -1528,8 +1529,11 @@
       lcdMsg(FRAME_LABEL[state.frame]);
     });
     // ▲ / ▼: change the look, or (in playback) go to a newer / older shot
-    el.filterPrev.addEventListener('click', () => { press(); if (lcdShow.mode === 'play') playStep(-1); else setFilter(state.filter - 1); });
-    el.filterNext.addEventListener('click', () => { press(); if (lcdShow.mode === 'play') playStep(1); else setFilter(state.filter + 1); });
+    const step = (d) => { press(); if (lcdShow.mode === 'play') playStep(d); else setFilter(state.filter + d); };
+    el.filterPrev.addEventListener('click', () => step(-1));
+    el.filterNext.addEventListener('click', () => step(1));
+    // the extra ▲ ▼ beside / under the camera do the same
+    document.querySelectorAll('.arrow-btn').forEach((b) => b.addEventListener('click', () => step(Number(b.dataset.step))));
     el.muteBtn.addEventListener('click', () => {
       state.muted = !state.muted;
       store.set('muted', state.muted);
@@ -1543,6 +1547,7 @@
 
     el.rollBtn.addEventListener('click', togglePlay);
     el.rollBtn2.addEventListener('click', togglePlay);
+    $('rollBtn3').addEventListener('click', togglePlay);
     el.pbAll.addEventListener('click', (e) => { e.stopPropagation(); exitPlay(); openRoll(); });
     el.pbZoom.addEventListener('click', (e) => { e.stopPropagation(); press(); openViewer(lcdShow.list, lcdShow.index); });
     el.viewerClose.addEventListener('click', () => { press(); closeViewer(); });
