@@ -18,7 +18,7 @@
     screenFlash: $('screenFlash'),
     modeBtn: $('modeBtn'), rollBtn2: $('rollBtn2'), shutterV: $('shutterV'), shutterH: $('shutterH'), saveRollBtn: $('saveRollBtn'), modeBtn2: $('modeBtn2'),
     viewer: $('viewer'), viewerScreen: $('viewerScreen'), viewerTrack: $('viewerTrack'), viewerTag: $('viewerTag'),
-    viewerClose: $('viewerClose'), viewerSave: $('viewerSave'), pbZoom: $('pbZoom'),
+    viewerClose: $('viewerClose'), viewerSave: $('viewerSave'),
     pb: $('pb'), pbImg: $('pbImg'), pbVid: $('pbVid'), pbTag: $('pbTag'), pbAll: $('pbAll'), pbSave: $('pbSave'), hudRec: $('hudRec'), hudRecText: $('hudRecText'), led: $('led'),
     downloadLink: $('downloadLink'),
     rollSheet: $('rollSheet'), rollGrid: $('rollGrid'), rollCount: $('rollCount'), rollEmpty: $('rollEmpty'),
@@ -1665,7 +1665,14 @@
     el.rollBtn2.addEventListener('click', togglePlay);
     $('rollBtn3').addEventListener('click', togglePlay);
     el.pbAll.addEventListener('click', (e) => { e.stopPropagation(); exitPlay(); openRoll(); });
-    el.pbZoom.addEventListener('click', (e) => { e.stopPropagation(); press(); openViewer(lcdShow.list, lcdShow.index); });
+    // Full (outside the camera): the shot on screen in playback, otherwise the newest shot
+    document.querySelectorAll('.full-btn').forEach((b) => b.addEventListener('click', async () => {
+      press();
+      if (lcdShow.mode === 'play') { openViewer(lcdShow.list, lcdShow.index); return; }
+      const list = await roll.all();
+      if (!list.length) { lcdMsg('NO SHOTS'); return; }
+      openViewer(list, 0);
+    }));
     el.viewerClose.addEventListener('click', () => { press(); closeViewer(); });
     el.viewerSave.addEventListener('click', () => {
       const rec = viewer.list[viewer.index];
@@ -1690,7 +1697,6 @@
     ['pointerup', 'pointerdown'].forEach((t) => {
       el.pbAll.addEventListener(t, (e) => e.stopPropagation());
       el.pbSave.addEventListener(t, (e) => e.stopPropagation());
-      el.pbZoom.addEventListener(t, (e) => e.stopPropagation());
     });
     el.closeRollBtn.addEventListener('click', () => { press(); closeRoll(); });
     el.rollSheet.addEventListener('click', (e) => { if (e.target === el.rollSheet) closeRoll(); });

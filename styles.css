@@ -332,23 +332,7 @@ body[data-color='clear'] .shell {
 .pb-chip:active { transform: scale(0.95); }
 .pb-all { left: 3%; }
 .pb-save { right: 3%; background: var(--ink); color: var(--page); }
-.pb-zoom {
-  position: absolute;
-  top: 4%;
-  right: 3%;
-  width: 11cqh;
-  height: 11cqh;
-  min-width: 26px;
-  min-height: 26px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.55);
-}
-.pb-zoom::after { content: ''; position: absolute; inset: -8px; }
-.pb-zoom svg { width: 55%; height: 55%; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-.pb.review .pb-chip, .pb.review .pb-zoom { display: none; }
+.pb.review .pb-chip { display: none; }
 
 /* full-screen viewer: the LCD zoomed up to fill the display; buttons in the empty space */
 .viewer {
@@ -578,9 +562,13 @@ body.v .stage { gap: 30px; }
 .cam-slot { margin-block: auto; }
 /* Upright, the iPhone's rear lens is behind the top-right of the screen: the camera sits in
    that corner (4 pt from the edge) so it lines up with the real lens. */
-body.v .cam-slot { align-self: flex-end; margin: 4px -8px auto 0; }
+body.v .cam-slot { align-self: flex-end; margin: 4px -8px 0 0; }
 /* selfie camera (screen or Lens view): sit by the phone's real selfie camera, top-centre upright */
-body.v.selfie .cam-slot { align-self: center; margin: 4px 0 auto; }
+body.v.selfie .cam-slot { align-self: center; margin: 4px 0 0; }
+/* Full (full-screen photos): in the empty space just under the camera, on the right */
+.full-row { display: none; }
+body.v .full-row { display: flex; align-self: stretch; justify-content: flex-end; margin: -8px 4px auto; padding-bottom: 18px; }
+.full-btn svg { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 body.v .below { margin-top: auto; }
 body:not(.v) .dock { margin-top: auto; }
 /* Horizontal on a phone (held top-to-the-left): the iPhone's rear lens is ~12 mm in from that
