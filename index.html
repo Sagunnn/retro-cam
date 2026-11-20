@@ -18,7 +18,7 @@
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 
-  <link rel="stylesheet" href="styles.css?v=c01447b0b3">
+  <link rel="stylesheet" href="styles.css?v=7a23972f28">
 </head>
 <body data-color="yellow">
 
@@ -55,6 +55,7 @@
               <span class="pb-tag" id="pbTag"></span>
               <button class="pb-chip pb-all" id="pbAll">All</button>
               <button class="pb-chip pb-save" id="pbSave">Save</button>
+              <button class="pb-zoom" id="pbZoom" aria-label="Full screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M10 20H4v-6M20 4l-6.5 6.5M4 20l6.5-6.5"/></svg></button>
             </div>
             <div class="lcd-state" id="lcdState" hidden><span id="stateTitle">ON</span></div>
             <div class="lcd-glass" aria-hidden="true"></div>
@@ -163,9 +164,20 @@
       </div>
     </div>
 
+    <!-- full-screen viewer: the camera's screen zoomed up; swipe through every shot -->
+    <div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-label="Photos" hidden>
+      <div class="viewer-screen" id="viewerScreen">
+        <div class="viewer-track" id="viewerTrack"></div>
+        <div class="viewer-glass" aria-hidden="true"></div>
+        <span class="viewer-tag" id="viewerTag"></span>
+        <button class="viewer-x" id="viewerClose" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        <button class="viewer-save" id="viewerSave">Save</button>
+      </div>
+    </div>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <script src="app.js?v=9ed66c9d3e" defer></script>
+  <script src="app.js?v=bfb00bb139" defer></script>
 </body>
 </html>

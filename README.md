@@ -48,6 +48,8 @@ CNAME           custom domain for GitHub Pages
   **Save to Photos** (share sheet → *Save Images*). Select all / Delete are there too.
 - **▶ Playback:** shows your newest shot on the camera's screen; **▼** goes to older shots, **▲** to
   newer ones (or swipe). **Save** puts the shot on screen into Photos (share sheet → *Save Image*);
+  **⤢** (or tapping the photo) zooms the camera's screen up to full screen: swipe sideways through
+  every shot, **Save** the one you're on, **✕** zooms back down to the camera.
   **All** opens the film roll, where you tap shots to select several and save or delete them
   together. Press ▶ or the shutter to go back to shooting.
 - **Video:** the small button with the red dot on the top edge (the camera button below it when

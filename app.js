@@ -17,6 +17,8 @@
     muteBtn: $('muteBtn'), installBtn: $('installBtn'), iosTip: $('iosTip'), iosTipClose: $('iosTipClose'),
     screenFlash: $('screenFlash'),
     modeBtn: $('modeBtn'), rollBtn2: $('rollBtn2'), shutterV: $('shutterV'), shutterH: $('shutterH'), saveRollBtn: $('saveRollBtn'), modeBtn2: $('modeBtn2'), layoutBtn: $('layoutBtn'),
+    viewer: $('viewer'), viewerScreen: $('viewerScreen'), viewerTrack: $('viewerTrack'), viewerTag: $('viewerTag'),
+    viewerClose: $('viewerClose'), viewerSave: $('viewerSave'), pbZoom: $('pbZoom'),
     pb: $('pb'), pbImg: $('pbImg'), pbVid: $('pbVid'), pbTag: $('pbTag'), pbAll: $('pbAll'), pbSave: $('pbSave'), hudRec: $('hudRec'), hudRecText: $('hudRecText'), led: $('led'),
     downloadLink: $('downloadLink'),
     rollSheet: $('rollSheet'), rollGrid: $('rollGrid'), rollCount: $('rollCount'), rollEmpty: $('rollEmpty'),
@@ -1212,6 +1214,7 @@
   }
   function hideLcdShow() {
     resetWatchdog();
+    if (viewer.open) closeViewerNow();
     clearTimeout(lcdShow.timer);
     el.pb.hidden = true;
     el.pb.classList.remove('review');
@@ -1265,6 +1268,98 @@
     if (lcdShow.mode !== 'play') return;
     hideLcdShow();
   }
+  /* ----- full-screen viewer: the LCD "zoomed in", swipe through every shot */
+  const viewer = { list: [], index: 0, urls: [], open: false };
+  function lcdBox() {
+    // the LCD's box in the viewer's own coordinates (the app may be flipped 90°)
+    const app = el.viewer.getBoundingClientRect(), r = el.lcd.getBoundingClientRect();
+    if (!flipped()) return { x: r.left - app.left, y: r.top - app.top, w: r.width, h: r.height };
+    // flipped: screen y → app x, screen x → app y (mirrored)
+    return { x: r.top - app.top, y: app.right - r.right, w: r.height, h: r.width };
+  }
+  function screenBox() {
+    const s = el.viewerScreen, v = el.viewer;
+    return { x: s.offsetLeft, y: s.offsetTop, w: s.offsetWidth, h: s.offsetHeight, vw: v.offsetWidth };
+  }
+  function zoomFrames() {
+    const a = lcdBox(), b = screenBox();
+    const dx = a.x + a.w / 2 - (b.x + b.w / 2), dy = a.y + a.h / 2 - (b.y + b.h / 2);
+    return [{ transform: `translate(${dx}px, ${dy}px) scale(${a.w / b.w}, ${a.h / b.h})` }, { transform: 'none' }];
+  }
+  function openViewer(list, index) {
+    if (!list.length) return;
+    closeViewerNow();
+    viewer.list = list;
+    viewer.index = index;
+    viewer.open = true;
+    const frag = document.createDocumentFragment();
+    for (const rec of list) {
+      const slide = document.createElement('div');
+      slide.className = 'viewer-slide';
+      const url = URL.createObjectURL(rec.blob);
+      viewer.urls.push(url);
+      let media;
+      if (rec.kind === 'video') {
+        media = document.createElement('video');
+        media.playsInline = true;
+        media.loop = true;
+        media.muted = true;
+        media.preload = 'metadata';
+        media.addEventListener('click', () => { media.muted = !media.muted; });
+      } else {
+        media = document.createElement('img');
+        media.decoding = 'async';
+        media.loading = 'lazy';
+        media.alt = `Shot ${rec.n || rec.id}`;
+      }
+      media.src = url;
+      slide.append(media);
+      frag.append(slide);
+    }
+    el.viewerTrack.textContent = '';
+    el.viewerTrack.append(frag);
+    el.viewer.hidden = false;
+    el.viewerTrack.scrollLeft = index * el.viewerTrack.clientWidth;
+    viewerSync();
+    if (el.viewerScreen.animate) {
+      el.viewerScreen.animate(zoomFrames(), { duration: 320, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
+      el.viewer.animate([{ backgroundColor: 'rgba(0,0,0,0)' }, { backgroundColor: '#000' }], { duration: 320 });
+    }
+  }
+  function viewerSync() {
+    const w = el.viewerTrack.clientWidth || 1;
+    const i = Math.max(0, Math.min(viewer.list.length - 1, Math.round(el.viewerTrack.scrollLeft / w)));
+    viewer.index = i;
+    el.viewerTag.textContent = `${i + 1}/${viewer.list.length}`;
+    el.viewerTrack.querySelectorAll('video').forEach((v, k) => {
+      const slideIndex = [...el.viewerTrack.children].indexOf(v.parentElement);
+      if (slideIndex === i) v.play().catch(() => {}); else v.pause();
+    });
+  }
+  function closeViewerNow() {
+    el.viewer.hidden = true;
+    el.viewerTrack.querySelectorAll('video').forEach((v) => v.pause());
+    el.viewerTrack.textContent = '';
+    viewer.urls.forEach((u) => URL.revokeObjectURL(u));
+    viewer.urls = [];
+    viewer.open = false;
+  }
+  function closeViewer() {
+    if (!viewer.open) return;
+    // back on the camera's screen at the shot you stopped on
+    if (lcdShow.mode === 'play' && lcdShow.list === viewer.list) { lcdShow.index = viewer.index; showPlay(); }
+    const done = () => closeViewerNow();
+    if (el.viewerScreen.animate) {
+      const frames = zoomFrames().reverse();
+      el.viewer.animate([{ backgroundColor: '#000' }, { backgroundColor: 'rgba(0,0,0,0)' }], { duration: 260, fill: 'forwards' });
+      el.viewerScreen.animate(frames, { duration: 260, easing: 'cubic-bezier(0.4, 0, 0.8, 0.4)', fill: 'forwards' }).onfinish = () => {
+        el.viewer.getAnimations().forEach((a) => a.cancel());
+        el.viewerScreen.getAnimations().forEach((a) => a.cancel());
+        done();
+      };
+    } else done();
+  }
+
   function togglePlay() {
     press();
     if (lcdShow.mode === 'play') exitPlay(); else enterPlay();
@@ -1449,6 +1544,23 @@
     el.rollBtn.addEventListener('click', togglePlay);
     el.rollBtn2.addEventListener('click', togglePlay);
     el.pbAll.addEventListener('click', (e) => { e.stopPropagation(); exitPlay(); openRoll(); });
+    el.pbZoom.addEventListener('click', (e) => { e.stopPropagation(); press(); openViewer(lcdShow.list, lcdShow.index); });
+    el.viewerClose.addEventListener('click', () => { press(); closeViewer(); });
+    el.viewerSave.addEventListener('click', () => {
+      const rec = viewer.list[viewer.index];
+      if (rec) saveRecords([rec]);
+    });
+    let scrollTimer = 0;
+    el.viewerTrack.addEventListener('scroll', () => {
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(viewerSync, 90);
+    }, { passive: true });
+    // keep the same shot in view if the screen size changes (turning the phone, layout toggle)
+    if (window.ResizeObserver) {
+      new ResizeObserver(() => {
+        if (viewer.open) el.viewerTrack.scrollLeft = viewer.index * el.viewerTrack.clientWidth;
+      }).observe(el.viewerTrack);
+    }
     el.pbSave.addEventListener('click', (e) => {
       e.stopPropagation();
       const rec = lcdShow.list[lcdShow.index];
@@ -1457,6 +1569,7 @@
     ['pointerup', 'pointerdown'].forEach((t) => {
       el.pbAll.addEventListener(t, (e) => e.stopPropagation());
       el.pbSave.addEventListener(t, (e) => e.stopPropagation());
+      el.pbZoom.addEventListener(t, (e) => e.stopPropagation());
     });
     el.closeRollBtn.addEventListener('click', () => { press(); closeRoll(); });
     el.rollSheet.addEventListener('click', (e) => { if (e.target === el.rollSheet) closeRoll(); });
@@ -1495,7 +1608,7 @@
       const tap = Math.abs(dx) < 10 && Math.abs(dy) < 10;
       if (lcdShow.mode === 'play') {
         if (swipe) { press(); playStep(dx < 0 ? 1 : -1); } // swipe left = older
-        else if (tap && !el.pbVid.hidden) el.pbVid.muted = !el.pbVid.muted;
+        else if (tap) openViewer(lcdShow.list, lcdShow.index);
       } else if (lcdShow.mode === 'review') {
         if (tap) endReview();
       } else if (swipe && state.running) {
@@ -1508,6 +1621,12 @@
     el.lcd.addEventListener('pointercancel', () => { sx = null; });
 
     document.addEventListener('keydown', (e) => {
+      if (viewer.open) {
+        if (e.key === 'Escape') closeViewer();
+        else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') el.viewerTrack.scrollBy({ left: el.viewerTrack.clientWidth, behavior: 'smooth' });
+        else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') el.viewerTrack.scrollBy({ left: -el.viewerTrack.clientWidth, behavior: 'smooth' });
+        return;
+      }
       if (e.key === 'Escape') {
         if (!el.rollSheet.hidden) closeRoll();
         else el.iosTip.hidden = true;
