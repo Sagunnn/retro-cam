@@ -16,7 +16,7 @@
     filterPrev: $('filterPrev'), filterNext: $('filterNext'),
     muteBtn: $('muteBtn'), installBtn: $('installBtn'), iosTip: $('iosTip'), iosTipClose: $('iosTipClose'),
     screenFlash: $('screenFlash'),
-    modeBtn: $('modeBtn'), rollBtn2: $('rollBtn2'), modeBtn2: $('modeBtn2'),
+    modeBtn: $('modeBtn'), rollBtn2: $('rollBtn2'), modeBtn2: $('modeBtn2'), layoutBtn: $('layoutBtn'),
     pb: $('pb'), pbImg: $('pbImg'), pbVid: $('pbVid'), pbTag: $('pbTag'), pbAll: $('pbAll'), pbSave: $('pbSave'), hudRec: $('hudRec'), hudRecText: $('hudRecText'), led: $('led'),
     downloadLink: $('downloadLink'),
     rollSheet: $('rollSheet'), rollGrid: $('rollGrid'), rollCount: $('rollCount'), rollEmpty: $('rollEmpty'),
@@ -636,6 +636,11 @@
     if (state.running || state.error === 'busy' || state.error === 'error') startCamera();
   }
   function startLoop() { if (!rafId) rafId = requestAnimationFrame(loop); }
+  function setLayout(vertical) {
+    document.body.classList.toggle('v', vertical);
+    el.layoutBtn.setAttribute('aria-pressed', String(vertical));
+    el.layoutBtn.setAttribute('aria-label', vertical ? 'Vertical layout (tap for horizontal)' : 'Horizontal layout (tap for vertical)');
+  }
   function fitView() {
     const w = 320, h = 160;
     if (el.view.width !== w || el.view.height !== h) { el.view.width = w; el.view.height = h; }
@@ -1425,6 +1430,12 @@
     el.saveSelBtn.addEventListener('click', saveSelected);
     el.deleteSelBtn.addEventListener('click', deleteSelected);
     el.modeBtn.addEventListener('click', () => { press(); setMode(state.mode === 'video' ? 'photo' : 'video'); });
+    el.layoutBtn.addEventListener('click', () => {
+      press();
+      const v = !document.body.classList.contains('v');
+      setLayout(v);
+      lcdMsg(v ? 'VERTICAL' : 'HORIZONTAL');
+    });
     el.modeBtn2.addEventListener('click', () => { press(); setMode(state.mode === 'video' ? 'photo' : 'video'); });
 
     el.retryBtn.addEventListener('click', () => { press(); startCamera(); });
@@ -1491,7 +1502,9 @@
   /* --------------------------------------------------------------- boot */
   function boot() {
     fitView();
-    const onTurn = () => { if (state.recording) stopRecording(); fitView(); };
+    // Vertical layout follows the phone (upright = vertical) until the toggle says otherwise.
+    const onTurn = () => { if (state.recording) stopRecording(); fitView(); setLayout(VERTICAL.matches); };
+    setLayout(VERTICAL.matches);
     if (VERTICAL.addEventListener) VERTICAL.addEventListener('change', onTurn);
     else if (VERTICAL.addListener) VERTICAL.addListener(onTurn);
     setColor(state.color, false);

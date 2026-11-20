@@ -26,9 +26,11 @@ CNAME           custom domain for GitHub Pages
 
 ## Using it
 
-- **Hold it either way.** Sideways it's the whole camera. Upright, the screen-and-buttons part of the
-  camera fills the width (the left end runs off the screen), with ▶ and the video button underneath.
-  Photos and videos always come out wide (1792×896 photo area, 640×320 video), matching the screen.
+- **Two layouts.** Horizontal shows the whole camera. Vertical shows the screen-and-buttons part of
+  the camera big (the left end is cut off), with **Play** and **Video** buttons underneath. It picks
+  vertical when the phone is upright and horizontal when it's sideways; the layout button in the
+  row of toggles switches it either way without turning the phone. Photos and videos always come
+  out wide (1792×896 photo area, 640×320 video), matching the screen.
 - **Light** under the viewfinder: green in photo mode, red in video mode, blinking while recording.
   The red dot on the top-edge button lights up in video mode too.
 - **Shutter:** the big red button on the body, or tap the screen. After a shot it stays on the
@@ -45,7 +47,7 @@ CNAME           custom domain for GitHub Pages
   In video mode the shutter starts and stops recording (lo-fi 640×320, 24 fps, with sound, up to
   60 s). Video gets the same look and date stamp.
 - Row under the camera: switch camera, flash, date stamp, frame (film border by default, then none /
-  instant / round), sound.
+  instant / round), layout (horizontal / vertical), sound.
 - The coloured dots change the body: Yellow, Clear, Red, Blue, Black.
 
 ## Deploy on GitHub Pages (retro.sagunpradhan.com.np)

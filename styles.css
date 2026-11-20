@@ -407,31 +407,49 @@ body[data-color='clear'] .shell {
 /* recording: the red dome becomes a rounded "stop" square */
 .shutter.recording span { width: 46%; height: 46%; border-radius: 18%; animation: recblink 1s steps(2) infinite; }
 
-/* ---------------------- upright phone: the screen-and-buttons part of the camera, big */
+/* ------------- vertical layout: the screen-and-buttons part of the camera, big --------------
+   On by default when the phone is upright; the layout toggle switches it either way. */
 .below { display: none; }
+body.v .cam-slot {
+  /* show the right 83% of the body (screen + buttons); the left end is cut off */
+  --W: min(calc((100cqw - var(--pl) - var(--pr) - 12px) / 0.83), calc((100cqh - var(--pt) - var(--pb) - 250px) / 0.46), 1100px);
+  align-self: flex-end;
+  margin-right: -12px; /* flush with the right edge */
+  width: calc(var(--W) * 0.83);
+  padding: calc(var(--W) * 0.035) 0 calc(var(--W) * 0.05);
+  overflow: hidden;
+  display: flex;
+  justify-content: flex-end;
+}
+body.v .camera {
+  flex: none;
+  width: var(--W);
+  margin-top: 0;
+}
+/* the cut-off frame would clip the soft drop shadow into a box, so keep only the hard edge */
+body.v .shell {
+  box-shadow:
+    inset 0 calc(0.4 * var(--u)) 0 rgba(255, 255, 255, 0.45),
+    inset 0 calc(-0.6 * var(--u)) 0 rgba(0, 0, 0, 0.1),
+    0 calc(1 * var(--u)) 0 var(--body-edge);
+}
+/* phone sideways but vertical layout chosen: the cut-down camera sits in the middle */
+@media (orientation: landscape) {
+  body.v .cam-slot { align-self: center; margin-right: 0; }
+}
+body.v .stage { gap: 30px; }
+body.v .below {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  margin-bottom: 14px; /* room for the captions */
+}
 @media (orientation: portrait) {
-  .cam-slot {
-    /* the body runs off the left edge; only the screen and the right-hand buttons show */
-    align-self: stretch;
-    display: flex;
-    justify-content: flex-end;
-  }
-  .camera {
-    flex: none;
-    width: calc((100cqw - var(--pl) - var(--pr) - 24px) / 0.83);
-    margin-top: 4%;
-  }
-  .stage { gap: 30px; }
-  .below {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 22px;
-  }
-  .dock { flex-wrap: wrap; row-gap: 14px; max-width: 100%; }
   .roll-grid { grid-template-columns: repeat(3, 1fr); }
 }
 .big-mode {
+  position: relative;
   width: 52px;
   height: 52px;
   border-radius: 50%;
@@ -447,13 +465,27 @@ body[data-color='clear'] .shell {
 .big-mode[data-on='true'] { color: #ffd23a; }
 .big-mode[aria-pressed='true'] { color: #ff5a4a; }
 .big-mode:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
+.big-mode::after {
+  /* caption under the button */
+  content: attr(data-label);
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  font: 700 11px/1 var(--sans);
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
 
 /* ------------------------------------------------------------- dock */
 .dock {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 14px 24px;
+  max-width: 100%;
 }
 .toggles { display: flex; gap: 10px; }
 .tg {

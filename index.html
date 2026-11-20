@@ -18,7 +18,7 @@
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 
-  <link rel="stylesheet" href="styles.css?v=53d49a6ea5">
+  <link rel="stylesheet" href="styles.css?v=9210e099ab">
 </head>
 <body data-color="yellow">
   <video id="video" playsinline muted autoplay aria-hidden="true"></video>
@@ -71,10 +71,10 @@
       </div>
       </div>
 
-      <!-- upright phone: the camera's left side runs off-screen, so playback + video mode sit below -->
+      <!-- vertical layout: the camera's left side runs off-screen, so playback + video mode sit below -->
       <div class="below">
-        <button class="big-mode" id="rollBtn2" aria-label="Playback"><svg class="fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg></button>
-        <button class="big-mode" id="modeBtn2" aria-label="Video mode" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="13" height="11" rx="2"/><path d="m15.5 10.5 6-3.5v10l-6-3.5z"/></svg></button>
+        <button class="big-mode" id="rollBtn2" aria-label="Playback" data-label="Play"><svg class="fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg></button>
+        <button class="big-mode" id="modeBtn2" aria-label="Video mode" aria-pressed="false" data-label="Video"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="13" height="11" rx="2"/><path d="m15.5 10.5 6-3.5v10l-6-3.5z"/></svg></button>
       </div>
 
       <div class="dock">
@@ -90,6 +90,9 @@
           </button>
           <button class="tg" id="frameBtn" aria-pressed="false" aria-label="Frame">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1.5"/><rect x="7" y="8" width="10" height="8"/></svg>
+          </button>
+          <button class="tg" id="layoutBtn" aria-pressed="false" aria-label="Vertical layout">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M3.5 9.5a8.5 8.5 0 0 1 2-4m15 9a8.5 8.5 0 0 1-2 4"/><path d="m3 6 2.5-.5L6 8m15 10-2.5.5L18 16"/></svg>
           </button>
           <button class="tg" id="muteBtn" aria-pressed="false" aria-label="Sound on">
             <svg class="i-sound" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>
@@ -155,6 +158,6 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <script src="app.js?v=89b5f2131d" defer></script>
+  <script src="app.js?v=fa09002231" defer></script>
 </body>
 </html>
