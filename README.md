@@ -58,15 +58,15 @@ CNAME           custom domain for GitHub Pages
   upright) switches between photo and video.
   In video mode the shutter starts and stops recording (lo-fi 640×320, 24 fps, with sound, up to
   60 s). Video gets the same look and date stamp.
-- **Wide (0.5×)** (rear camera): switches to the phone's ultra-wide lens when it has one (found by
-  the camera's name, e.g. iPhone's "Back Ultra Wide Camera"); otherwise the screen says NO WIDE.
-  The button is always there; with the selfie camera it's dimmed and says REAR ONLY.
+- **Wide**: rear camera → the phone's ultra-wide (0.5×) lens, found by its name (iPhone: "Back Ultra
+  Wide Camera"). Selfie camera, or phones without a separate ultra-wide → zooms the camera out as far
+  as the browser allows. The LCD shows REAR 0.5× / SELFIE WIDE, or NO WIDE if neither is possible.
 - **Lens** (appears with the selfie camera): the camera turns round to show its front (lens,
   viewfinder window, flash window, rainbow band), so you don't see yourself, just like holding the
   real thing. Tap the camera's front or a capture button to shoot; it turns back to show the photo
   for the 5-second review, then back to the lens. The flash window glows red while recording. In Lens view the drawn lens follows
   the phone's real selfie camera: upright, the camera is centred near the top with its lens in the
-  middle near the top; sideways, the camera is centred with its lens at the left end.
+  middle near the top; sideways, the whole camera sits on the left, half way down, with its lens at the left end.
 - **HQ** (in the option row) switches from the vintage look to high quality: full camera resolution
   (up to 3840×1920), the chosen look's colours without grain or JPEG crunch, saved at high quality.
   Video goes to 960×480. Off by default.

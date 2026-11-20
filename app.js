@@ -754,7 +754,6 @@
       if (state.wide && state.facing === 'environment') {
         const uw = await findUltraWide();
         if (uw) { delete video.facingMode; video.deviceId = { exact: uw }; state.wideActive = true; }
-        else lcdMsg('NO WIDE', 1200);
       }
       const get = (audio, v) => navigator.mediaDevices.getUserMedia({ audio, video: v });
       try {
@@ -788,6 +787,14 @@
       state.mirror = settings.facingMode ? settings.facingMode === 'user' : (state.facing === 'user' || !IS_MOBILE);
       const caps = (state.track.getCapabilities && state.track.getCapabilities()) || {};
       state.torch = !!caps.torch;
+      // Wide without a separate ultra-wide camera (e.g. the selfie camera): zoom out as far as allowed
+      if (state.wide && !state.wideActive) {
+        const cur = (settings.zoom || 1);
+        if (caps.zoom && caps.zoom.min < cur) {
+          try { await state.track.applyConstraints({ advanced: [{ zoom: caps.zoom.min }] }); state.wideActive = true; } catch { /* not allowed */ }
+        }
+        if (!state.wideActive) setTimeout(() => lcdMsg('NO WIDE', 1200), 400);
+      }
       hideState();
       state.running = true;
       startLoop();
@@ -1458,7 +1465,9 @@
     el.hqBtn.setAttribute('aria-pressed', String(state.hq));
     el.hqBtn.setAttribute('aria-label', state.hq ? 'High quality on (tap for vintage)' : 'Vintage quality (tap for high quality)');
     el.hudFlash.toggleAttribute('hidden', !state.flash);
-    el.hudFacing.textContent = state.facing === 'user' ? 'SELFIE' : (state.wideActive ? 'REAR 0.5×' : 'REAR');
+    el.hudFacing.textContent = state.facing === 'user'
+      ? (state.wideActive ? 'SELFIE WIDE' : 'SELFIE')
+      : (state.wideActive ? 'REAR 0.5×' : 'REAR');
     document.querySelectorAll('.wide-btn').forEach((b) => b.setAttribute('aria-pressed', String(state.wide)));
     el.hudCount.textContent = pad(Math.min(999, state.shots), 3);
     const video = state.mode === 'video';
@@ -1583,7 +1592,6 @@
     $('front').addEventListener('click', shoot);
     document.querySelectorAll('.wide-btn').forEach((b) => b.addEventListener('click', () => {
       press();
-      if (state.facing === 'user') { lcdMsg('REAR ONLY', 1000); return; }
       state.wide = !state.wide;
       store.set('wide', state.wide);
       updateHud();

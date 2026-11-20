@@ -587,8 +587,9 @@ body:not(.v) .dock { margin-top: auto; }
    top-left corner, so the camera sits in the corner with its viewfinder over the real lens. */
 @media (pointer: coarse) {
   body:not(.v) .cam-slot { align-self: flex-start; margin: 4px 0 auto; }
-  /* sideways selfie (Lens view): the camera sits in the middle, its lens drawn at the left end */
-  body:not(.v).lens-view .cam-slot { align-self: center; margin: auto 0; }
+  /* sideways selfie (Lens view): the whole camera sits on the left, half way down (by the real
+     selfie camera), with its lens drawn at the left end */
+  body:not(.v).lens-view .cam-slot { align-self: flex-start; margin: auto 0; }
 }
 body.v .below {
   display: grid;
@@ -679,7 +680,6 @@ body:not(.v) .side { display: flex; }
 .below #rollBtn2 { grid-area: play; }
 .below .lens-btn { grid-area: lens; }
 .below .wide-btn { grid-area: wide; }
-body.selfie .wide-btn { opacity: 0.4; } /* the ultra-wide lens is on the back */
 .wide-btn span { font: 800 14px/1 var(--mono); letter-spacing: -0.02em; }
 .big-mode.wide-btn[aria-pressed='true'] { color: #ffd23a; }
 .lens-btn { display: none !important; }
