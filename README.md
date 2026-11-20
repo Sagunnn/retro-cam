@@ -66,8 +66,13 @@ at `cname.vercel-dns.com`.
 
 ### Updating
 
-Push to `main`. The service worker always tries the network first, so the next launch picks up
-the new files. Only bump `VERSION` in `sw.js` if you rename or remove a file listed in `SHELL`.
+1. After changing `styles.css` or `app.js`, run `node tools/stamp.mjs`. It puts a content hash
+   on their URLs in `index.html` (`app.js?v=…`), so Cloudflare's cache can't keep serving
+   old files after a deploy.
+2. Commit and push to `main`. Pages redeploys in about a minute.
+
+The service worker tries the network first, so the next launch picks up the new files. Only
+bump `VERSION` in `sw.js` if you rename or remove a file listed in `SHELL`.
 
 ## Testing on a phone
 
