@@ -589,7 +589,16 @@ body:not(.v) .dock { margin-top: auto; }
   body:not(.v) .cam-slot { align-self: flex-start; margin: 4px 0 auto; }
   /* sideways selfie (Lens view): the whole camera sits on the left, half way down (by the real
      selfie camera), with its lens drawn at the left end */
-  body:not(.v).lens-view .cam-slot { align-self: flex-start; margin: auto 0; }
+  body:not(.v).lens-view .cam-slot {
+    position: absolute;
+    left: calc(var(--pl) + 12px);
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0;
+  }
+  body:not(.v).lens-view .camera { margin-top: 0; }
+  /* Play / Lens / Wide move up into the free corner above it */
+  body:not(.v).lens-view .side-l { top: calc(var(--pt) + 14px); bottom: auto; }
 }
 body.v .below {
   display: grid;
