@@ -429,6 +429,9 @@ body.v .camera {
   width: min(calc(58 * var(--mm, 100px)), 100cqw - var(--pl) - var(--pr) - 8px, (100cqh - var(--pt) - var(--pb) - 250px) / 0.45, 980px);
 }
 body.v .stage { gap: 30px; }
+/* controls sit at the bottom, within thumb reach; the camera floats in the space above */
+body.v .cam-slot { margin-block: auto; }
+body.v .below { margin-top: auto; }
 body.v .below {
   display: flex;
   align-items: center;
