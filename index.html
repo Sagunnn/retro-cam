@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Retro Cam</title>
+  <meta name="description" content="A pocket Y2K digital camera in your browser: lo-fi 1.6MP photos, retro filters, orange date stamps.">
+  <meta name="theme-color" content="#efe9dc">
+  <meta name="color-scheme" content="light">
+
+  <!-- installable web app (Android / desktop / iOS) -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Retro Cam">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-color="yellow">
+  <video id="video" playsinline muted autoplay aria-hidden="true"></video>
+
+  <!-- Always landscape: on a phone held upright the whole app is turned sideways. -->
+  <div class="app" id="app">
+    <main class="stage">
+      <!-- the camera, back view -->
+      <div class="camera" id="camera">
+        <button class="shutter" id="shutterBtn" aria-label="Take photo"></button>
+        <div class="shell">
+        <div class="ovf" aria-hidden="true"></div>
+
+        <div class="bezel">
+          <div class="lcd" id="lcd">
+            <canvas id="view" width="320" height="160" aria-label="Viewfinder"></canvas>
+            <div class="flash-blink" id="blink"></div>
+            <div class="hud" aria-hidden="true">
+              <span class="hud-tl" id="hudFilter">Y2K</span>
+              <span class="hud-tr"><span id="hudCount">000</span><span class="battery" id="battery"><i></i><i></i><i></i><i></i></span></span>
+              <span class="hud-bl">
+                <span id="hudFacing">REAR</span>
+                <svg id="hudFlash" viewBox="0 0 12 12" hidden><path d="M7 0 2 7h3.2L4.5 12 10 4.6H6.6z"/></svg>
+              </span>
+              <span class="hud-msg" id="hudMsg"></span>
+            </div>
+            <div class="lcd-state" id="lcdState" hidden><span id="stateTitle">ON</span></div>
+            <div class="lcd-glass" aria-hidden="true"></div>
+          </div>
+        </div>
+
+        <div class="right">
+          <div class="pair">
+            <button class="rb" id="filterPrev" aria-label="Previous filter"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7.5 6.5 15.5h11z"/></svg></button>
+            <button class="rb" id="filterNext" aria-label="Next filter"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16.5 6.5 8.5h11z"/></svg></button>
+          </div>
+          <button class="rb play" id="rollBtn" aria-label="Film roll"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5v11l9-5.5z"/></svg></button>
+        </div>
+        </div>
+      </div>
+
+      <div class="dock">
+        <div class="toggles">
+          <button class="tg" id="flipBtn" aria-label="Switch front / rear camera">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><path d="M9 13.5a3 3 0 0 0 5.6 1.3m.4-3a3 3 0 0 0-5.6-1.3"/></svg>
+          </button>
+          <button class="tg" id="flashBtn" aria-pressed="false" aria-label="Flash">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 5 13h6l-1 9 8-12h-6z"/></svg>
+          </button>
+          <button class="tg" id="dateBtn" aria-pressed="false" aria-label="Date stamp">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4m8-4v4"/></svg>
+          </button>
+          <button class="tg" id="frameBtn" aria-pressed="false" aria-label="Frame">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1.5"/><rect x="7" y="8" width="10" height="8"/></svg>
+          </button>
+          <button class="tg" id="muteBtn" aria-pressed="false" aria-label="Sound on">
+            <svg class="i-sound" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>
+            <svg class="i-mute" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="m17 9 5 6m0-6-5 6"/></svg>
+          </button>
+        </div>
+        <div class="colorways" role="radiogroup" aria-label="Body colour">
+          <button class="swatch" data-set-color="yellow" role="radio" aria-label="Classic Yellow"></button>
+          <button class="swatch" data-set-color="clear" role="radio" aria-label="Translucent"></button>
+          <button class="swatch" data-set-color="red" role="radio" aria-label="Red"></button>
+          <button class="swatch" data-set-color="blue" role="radio" aria-label="Blue"></button>
+          <button class="swatch" data-set-color="black" role="radio" aria-label="Black"></button>
+        </div>
+        <div class="install-wrap">
+          <button class="chip" id="installBtn" hidden aria-haspopup="dialog">Install</button>
+          <div class="ios-tip" id="iosTip" role="dialog" aria-label="Install on iPhone" hidden>
+            <span>Tap <b class="share-glyph" aria-label="Share"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3m0 0L8 7m4-4 4 4"/><path d="M7 10H5v11h14V10h-2"/></svg></b> Share in Safari (or under <b>•••</b>), then <b>Add to Home Screen</b>.</span>
+            <button class="tip-close" id="iosTipClose" aria-label="Close">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- camera problems are explained here -->
+      <div class="note" id="note" hidden>
+        <p id="stateBody"></p>
+        <div class="note-actions">
+          <button class="chip" id="retryBtn" hidden>Try again</button>
+          <label class="chip" id="nativeBtn" hidden>
+            Use phone camera
+            <input type="file" accept="image/*" capture="environment" id="nativeInput" hidden>
+          </label>
+        </div>
+      </div>
+    </main>
+
+    <div class="screen-flash" id="screenFlash" aria-hidden="true"></div>
+
+    <!-- review / viewer -->
+    <div class="sheet review" id="review" role="dialog" aria-modal="true" aria-labelledby="reviewTitle" hidden>
+      <div class="review-card">
+        <img id="reviewImg" alt="Captured photo">
+        <div class="review-side">
+          <div class="review-head">
+            <span id="reviewTitle">Review</span>
+            <button class="x" id="keepBtn" aria-label="Close">✕</button>
+          </div>
+          <span class="review-meta" id="reviewMeta"></span>
+          <button class="act primary" id="saveBtn">Save Photo</button>
+          <button class="act" id="discardBtn"><span id="discardLabel">Retake</span></button>
+          <a class="review-dl" id="downloadLink" download>Download .jpg</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- film roll -->
+    <div class="sheet drawer-wrap" id="rollSheet" role="dialog" aria-modal="true" aria-labelledby="rollTitle" hidden>
+      <div class="drawer">
+        <div class="drawer-head">
+          <div>
+            <h2 id="rollTitle">Film Roll</h2>
+            <p id="rollCount">0 shots</p>
+          </div>
+          <div class="drawer-actions">
+            <button class="chip" id="clearRollBtn">Clear</button>
+            <button class="chip" id="closeRollBtn">Close</button>
+          </div>
+        </div>
+        <div class="roll-grid" id="rollGrid"></div>
+        <p class="roll-empty" id="rollEmpty">No shots yet.</p>
+        <p class="roll-note">Kept on this device only. Open a shot and tap Save to put it in Photos.</p>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </div>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
