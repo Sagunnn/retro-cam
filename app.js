@@ -1583,6 +1583,7 @@
     $('front').addEventListener('click', shoot);
     document.querySelectorAll('.wide-btn').forEach((b) => b.addEventListener('click', () => {
       press();
+      if (state.facing === 'user') { lcdMsg('REAR ONLY', 1000); return; }
       state.wide = !state.wide;
       store.set('wide', state.wide);
       updateHud();

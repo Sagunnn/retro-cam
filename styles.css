@@ -587,8 +587,8 @@ body:not(.v) .dock { margin-top: auto; }
    top-left corner, so the camera sits in the corner with its viewfinder over the real lens. */
 @media (pointer: coarse) {
   body:not(.v) .cam-slot { align-self: flex-start; margin: 4px 0 auto; }
-  /* sideways (top to the left) the selfie camera is on the left edge, half way down */
-  body:not(.v).lens-view .cam-slot { margin: auto 0; }
+  /* sideways selfie (Lens view): the camera sits in the middle, its lens drawn at the left end */
+  body:not(.v).lens-view .cam-slot { align-self: center; margin: auto 0; }
 }
 body.v .below {
   display: grid;
@@ -679,7 +679,7 @@ body:not(.v) .side { display: flex; }
 .below #rollBtn2 { grid-area: play; }
 .below .lens-btn { grid-area: lens; }
 .below .wide-btn { grid-area: wide; }
-body.selfie .wide-btn { display: none !important; } /* the ultra-wide lens is on the back */
+body.selfie .wide-btn { opacity: 0.4; } /* the ultra-wide lens is on the back */
 .wide-btn span { font: 800 14px/1 var(--mono); letter-spacing: -0.02em; }
 .big-mode.wide-btn[aria-pressed='true'] { color: #ffd23a; }
 .lens-btn { display: none !important; }
@@ -776,6 +776,7 @@ body.rec .f-flash { background: radial-gradient(ellipse at 50% 40%, #ffd1c8, #ff
   position: absolute;
   left: 56%;
   top: 64%;
+  transition: left 0.5s, top 0.5s;
   width: calc(19 * var(--u));
   height: calc(19 * var(--u));
   margin: calc(-9.5 * var(--u)) 0 0 calc(-9.5 * var(--u));
@@ -786,6 +787,12 @@ body.rec .f-flash { background: radial-gradient(ellipse at 50% 40%, #ffd1c8, #ff
   display: grid;
   place-items: center;
 }
+/* where the lens is drawn follows the phone's real selfie camera */
+body:not(.v) .f-lens { left: 21%; top: 56%; }                       /* sideways: left end */
+body:not(.v) .f-flash { left: auto; right: calc(22 * var(--u)); top: calc(5 * var(--u)); }
+body:not(.v) .f-brand { left: calc(38 * var(--u)); top: calc(8.4 * var(--u)); }
+body.v .f-lens { left: 50%; top: 42%; }                             /* upright: middle, near the top */
+body.v .f-brand { left: calc(7 * var(--u)); top: auto; bottom: calc(6 * var(--u)); }
 .f-lens i {
   width: 52%;
   height: 52%;

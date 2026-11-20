@@ -60,11 +60,13 @@ CNAME           custom domain for GitHub Pages
   60 s). Video gets the same look and date stamp.
 - **Wide (0.5×)** (rear camera): switches to the phone's ultra-wide lens when it has one (found by
   the camera's name, e.g. iPhone's "Back Ultra Wide Camera"); otherwise the screen says NO WIDE.
+  The button is always there; with the selfie camera it's dimmed and says REAR ONLY.
 - **Lens** (appears with the selfie camera): the camera turns round to show its front (lens,
   viewfinder window, flash window, rainbow band), so you don't see yourself, just like holding the
   real thing. Tap the camera's front or a capture button to shoot; it turns back to show the photo
-  for the 5-second review, then back to the lens. The flash window glows red while recording. In Lens view the camera moves
-  next to the phone's real selfie camera (top-centre upright, left side when sideways).
+  for the 5-second review, then back to the lens. The flash window glows red while recording. In Lens view the drawn lens follows
+  the phone's real selfie camera: upright, the camera is centred near the top with its lens in the
+  middle near the top; sideways, the camera is centred with its lens at the left end.
 - **HQ** (in the option row) switches from the vintage look to high quality: full camera resolution
   (up to 3840×1920), the chosen look's colours without grain or JPEG crunch, saved at high quality.
   Video goes to 960×480. Off by default.
