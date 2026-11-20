@@ -26,11 +26,16 @@ CNAME           custom domain for GitHub Pages
 
 ## Using it
 
-- **Two layouts.** Horizontal shows the whole camera. Vertical shows the screen-and-buttons part of
-  the camera big (the left end is cut off), with **Play** and **Video** buttons underneath. It picks
-  vertical when the phone is upright and horizontal when it's sideways; the layout button in the
-  row of toggles switches it either way without turning the phone. Photos and videos always come
-  out wide (1792×896 photo area, 640×320 video), matching the screen.
+- **Life-size.** On a phone the camera is drawn at the real Charmera's size, 58 × 24.5 mm (scaled from
+  Apple's published screen densities for each iPhone; other phones use the standard 160 dp per inch).
+  On a computer it fills the window instead.
+- **Two layouts**, switched with the layout button in the row of toggles:
+  - **Vertical** (default when the phone is upright): the camera across the screen, with **Play** and
+    **Video** buttons underneath.
+  - **Horizontal**: with the phone upright the whole camera is flipped 90°, so you hold the phone
+    sideways (top to the left) like the real camera; the live picture turns with it. With the phone
+    actually sideways (rotation lock off) it's simply the horizontal camera.
+  Photos and videos always come out wide (1792×896 photo area, 640×320 video), matching the screen.
 - **Light** under the viewfinder: green in photo mode, red in video mode, blinking while recording.
   The red dot on the top-edge button lights up in video mode too.
 - **Shutter:** the big red button on the body, or tap the screen. After a shot it stays on the

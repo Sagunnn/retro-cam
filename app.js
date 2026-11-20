@@ -33,6 +33,12 @@
   // (an upright phone's portrait camera frame is cropped to the same wide shape).
   const VERTICAL = matchMedia('(orientation: portrait)');
   const shape = (long, short) => [long, short];
+  // Horizontal layout in an upright browser = the camera is flipped 90° (body.flip).
+  const flipped = () => document.body.classList.contains('flip');
+  // How far to turn the camera's portrait frames while flipped (phone held top-to-the-left):
+  // the back camera's world-up is on the frame's right (−90°); the selfie camera's frame is
+  // mirrored relative to that, so its world-up is on the left (+90°). 0 = no turn.
+  const needsTurn = (w, h) => (flipped() && h > w ? (state.mirror ? 1 : -1) : 0);
 
   /* ------------------------------------------------------------ settings */
   const store = {
@@ -514,7 +520,7 @@
     const v = el.video;
     if (v.readyState < 2 || !v.videoWidth) return;
     lastFrame = now;
-    const turn = 0;
+    const turn = needsTurn(v.videoWidth, v.videoHeight);
     if (state.recording) {
       // develop the recording frame once, then show it on the LCD
       const rw = recCanvas.width, rh = recCanvas.height;
@@ -580,7 +586,7 @@
     rec.onstop = finishRecording;
     // first frame before the recorder starts, so the file never opens on black
     const v = el.video;
-    drawCover(recCtx, recCanvas.width, recCanvas.height, v, v.videoWidth, v.videoHeight, state.mirror, 0);
+    drawCover(recCtx, recCanvas.width, recCanvas.height, v, v.videoWidth, v.videoHeight, state.mirror, needsTurn(v.videoWidth, v.videoHeight));
     state.recorder = rec;
     state.recording = true;
     recStart = performance.now();
@@ -626,7 +632,7 @@
   }
 
   function setMode(mode) {
-    if (screen.mode !== 'live') hideLcdShow();
+    if (lcdShow.mode !== 'live') hideLcdShow();
     if (state.recording) stopRecording();
     state.mode = mode;
     store.set('mode', mode);
@@ -638,6 +644,7 @@
   function startLoop() { if (!rafId) rafId = requestAnimationFrame(loop); }
   function setLayout(vertical) {
     document.body.classList.toggle('v', vertical);
+    document.body.classList.toggle('flip', !vertical && VERTICAL.matches);
     el.layoutBtn.setAttribute('aria-pressed', String(vertical));
     el.layoutBtn.setAttribute('aria-label', vertical ? 'Vertical layout (tap for horizontal)' : 'Horizontal layout (tap for vertical)');
   }
@@ -892,8 +899,8 @@
   }
 
   async function shoot() {
-    if (screen.mode === 'review') { endReview(); return; } // capture again = back to live
-    if (screen.mode === 'play') { exitPlay(); return; }
+    if (lcdShow.mode === 'review') { endReview(); return; } // capture again = back to live
+    if (lcdShow.mode === 'play') { exitPlay(); return; }
     if (state.busy) return;
     if (state.mode === 'video' && state.running) {
       if (state.recording) stopRecording(); else startRecording();
@@ -933,7 +940,7 @@
       void el.blink.offsetWidth;
       el.blink.classList.add('go');
       state.paused = true;
-      const shot = await developPhoto(grab, grab.width, grab.height, state.mirror, 0);
+      const shot = await developPhoto(grab, grab.width, grab.height, state.mirror, needsTurn(grab.width, grab.height));
       grab.width = grab.height = 1;
       const id = await roll.add(shot);
       shot.id = id;
@@ -1154,86 +1161,86 @@
   }
 
   /* ------------------------------------------- the camera's screen: review + playback */
-  // screen.mode: 'live' | 'review' (5 s after a shot) | 'play' (browsing with ▶ and ▲▼)
-  const screen = { mode: 'live', url: null, timer: 0, list: [], index: 0 };
+  // lcdShow.mode: 'live' | 'review' (5 s after a shot) | 'play' (browsing with ▶ and ▲▼)
+  const lcdShow = { mode: 'live', url: null, timer: 0, list: [], index: 0 };
   const REVIEW_MS = 5000;
 
   function showOnLcd(rec, tag) {
-    if (screen.url) URL.revokeObjectURL(screen.url);
-    screen.url = URL.createObjectURL(rec.blob);
+    if (lcdShow.url) URL.revokeObjectURL(lcdShow.url);
+    lcdShow.url = URL.createObjectURL(rec.blob);
     const isVideo = rec.kind === 'video';
     el.pbImg.hidden = isVideo;
     el.pbVid.hidden = !isVideo;
     if (isVideo) {
       el.pbImg.removeAttribute('src');
-      el.pbVid.src = screen.url;
+      el.pbVid.src = lcdShow.url;
       el.pbVid.play().catch(() => {});
     } else {
       el.pbVid.pause();
       el.pbVid.removeAttribute('src');
-      el.pbImg.src = screen.url;
+      el.pbImg.src = lcdShow.url;
     }
     el.pbTag.textContent = tag || '';
     el.pb.hidden = false;
     state.paused = true;
   }
   function hideLcdShow() {
-    clearTimeout(screen.timer);
+    clearTimeout(lcdShow.timer);
     el.pb.hidden = true;
     el.pb.classList.remove('review');
     el.pbVid.pause();
     el.pbVid.removeAttribute('src');
     el.pbImg.removeAttribute('src');
-    if (screen.url) { URL.revokeObjectURL(screen.url); screen.url = null; }
-    screen.mode = 'live';
-    screen.list = [];
+    if (lcdShow.url) { URL.revokeObjectURL(lcdShow.url); lcdShow.url = null; }
+    lcdShow.mode = 'live';
+    lcdShow.list = [];
     if (el.rollSheet.hidden) state.paused = false;
     updateHud();
   }
 
   function startReview(rec) {
-    if (screen.mode === 'play') hideLcdShow();
-    screen.mode = 'review';
+    if (lcdShow.mode === 'play') hideLcdShow();
+    lcdShow.mode = 'review';
     el.pb.classList.add('review');
     showOnLcd(rec, '');
-    clearTimeout(screen.timer);
-    screen.timer = setTimeout(endReview, REVIEW_MS);
+    clearTimeout(lcdShow.timer);
+    lcdShow.timer = setTimeout(endReview, REVIEW_MS);
   }
   function endReview() {
-    if (screen.mode !== 'review') return;
+    if (lcdShow.mode !== 'review') return;
     hideLcdShow();
   }
 
   async function enterPlay() {
     if (state.recording) stopRecording();
-    if (screen.mode === 'review') hideLcdShow();
+    if (lcdShow.mode === 'review') hideLcdShow();
     const list = await roll.all(); // newest first
     if (!list.length) { lcdMsg('NO SHOTS'); return; }
-    screen.mode = 'play';
-    screen.list = list;
-    screen.index = 0;
+    lcdShow.mode = 'play';
+    lcdShow.list = list;
+    lcdShow.index = 0;
     el.pb.classList.remove('review');
     showPlay();
     updateHud();
   }
   function showPlay() {
-    const rec = screen.list[screen.index];
-    showOnLcd(rec, `▶ ${screen.index + 1}/${screen.list.length}`);
+    const rec = lcdShow.list[lcdShow.index];
+    showOnLcd(rec, `▶ ${lcdShow.index + 1}/${lcdShow.list.length}`);
   }
   // +1 = older, -1 = newer
   function playStep(d) {
-    const i = screen.index + d;
-    if (i < 0 || i >= screen.list.length) { lcdMsg(i < 0 ? 'NEWEST' : 'OLDEST', 600); return; }
-    screen.index = i;
+    const i = lcdShow.index + d;
+    if (i < 0 || i >= lcdShow.list.length) { lcdMsg(i < 0 ? 'NEWEST' : 'OLDEST', 600); return; }
+    lcdShow.index = i;
     showPlay();
   }
   function exitPlay() {
-    if (screen.mode !== 'play') return;
+    if (lcdShow.mode !== 'play') return;
     hideLcdShow();
   }
   function togglePlay() {
     press();
-    if (screen.mode === 'play') exitPlay(); else enterPlay();
+    if (lcdShow.mode === 'play') exitPlay(); else enterPlay();
   }
 
   async function deleteSelected() {
@@ -1248,7 +1255,7 @@
 
   async function openRoll() {
     press();
-    if (screen.mode !== 'live') hideLcdShow();
+    if (lcdShow.mode !== 'live') hideLcdShow();
     if (state.recording) stopRecording();
     state.paused = true;
     selected.clear();
@@ -1280,7 +1287,7 @@
     el.hudRec.classList.toggle('rec', state.recording);
     if (!state.recording) el.hudRecText.textContent = 'STBY';
     el.shutterBtn.classList.toggle('recording', state.recording);
-    el.rollBtn2.dataset.on = String(screen.mode === 'play');
+    el.rollBtn2.dataset.on = String(lcdShow.mode === 'play');
     el.modeBtn2.setAttribute('aria-pressed', String(video));
     el.modeBtn2.setAttribute('aria-label', video ? 'Video mode on' : 'Video mode off');
     el.shutterBtn.setAttribute('aria-label', video ? (state.recording ? 'Stop recording' : 'Start recording') : 'Take photo');
@@ -1391,8 +1398,8 @@
       lcdMsg(FRAME_LABEL[state.frame]);
     });
     // ▲ / ▼: change the look, or (in playback) go to a newer / older shot
-    el.filterPrev.addEventListener('click', () => { press(); if (screen.mode === 'play') playStep(-1); else setFilter(state.filter - 1); });
-    el.filterNext.addEventListener('click', () => { press(); if (screen.mode === 'play') playStep(1); else setFilter(state.filter + 1); });
+    el.filterPrev.addEventListener('click', () => { press(); if (lcdShow.mode === 'play') playStep(-1); else setFilter(state.filter - 1); });
+    el.filterNext.addEventListener('click', () => { press(); if (lcdShow.mode === 'play') playStep(1); else setFilter(state.filter + 1); });
     el.muteBtn.addEventListener('click', () => {
       state.muted = !state.muted;
       store.set('muted', state.muted);
@@ -1409,7 +1416,7 @@
     el.pbAll.addEventListener('click', (e) => { e.stopPropagation(); exitPlay(); openRoll(); });
     el.pbSave.addEventListener('click', (e) => {
       e.stopPropagation();
-      const rec = screen.list[screen.index];
+      const rec = lcdShow.list[lcdShow.index];
       if (rec) saveRecords([rec]);
     });
     ['pointerup', 'pointerdown'].forEach((t) => {
@@ -1446,14 +1453,15 @@
     el.lcd.addEventListener('pointerdown', (e) => { sx = e.clientX; sy = e.clientY; });
     el.lcd.addEventListener('pointerup', (e) => {
       if (sx === null) return;
-      const dx = e.clientX - sx, dy = e.clientY - sy;
+      let dx = e.clientX - sx, dy = e.clientY - sy;
+      if (flipped()) [dx, dy] = [dy, -dx]; // screen axes → the flipped camera's axes
       sx = null;
       const swipe = Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5;
       const tap = Math.abs(dx) < 10 && Math.abs(dy) < 10;
-      if (screen.mode === 'play') {
+      if (lcdShow.mode === 'play') {
         if (swipe) { press(); playStep(dx < 0 ? 1 : -1); } // swipe left = older
         else if (tap && !el.pbVid.hidden) el.pbVid.muted = !el.pbVid.muted;
-      } else if (screen.mode === 'review') {
+      } else if (lcdShow.mode === 'review') {
         if (tap) endReview();
       } else if (swipe && state.running) {
         press();
@@ -1480,8 +1488,8 @@
       if (!el.rollSheet.hidden) return;
       const onButton = e.target instanceof HTMLElement && e.target.closest('button, a, input, label');
       if ((e.key === ' ' || e.key === 'Enter') && !onButton) { e.preventDefault(); shoot(); }
-      else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { if (screen.mode === 'play') playStep(-1); else setFilter(state.filter - 1); }
-      else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { if (screen.mode === 'play') playStep(1); else setFilter(state.filter + 1); }
+      else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { if (lcdShow.mode === 'play') playStep(-1); else setFilter(state.filter - 1); }
+      else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { if (lcdShow.mode === 'play') playStep(1); else setFilter(state.filter + 1); }
     });
 
     // Release the camera in the background; pick it back up on return.
@@ -1499,8 +1507,27 @@
     window.addEventListener('pagehide', stopCamera);
   }
 
+  /* ---------------------------------------------------------- life-size */
+  // The camera is drawn at its real size (58 × 24.5 mm). Browsers don't expose physical pixel
+  // density, so use Apple's figures per iPhone screen (points per inch), and Android's nominal
+  // 160 dp per inch otherwise. Computers keep the fill-the-window size.
+  function lifeSize() {
+    if (!matchMedia('(pointer: coarse)').matches) return;
+    const w = Math.min(window.screen.width, window.screen.height), h = Math.max(window.screen.width, window.screen.height);
+    const IPHONE_PPI = {
+      '375x812': 476 / 3,                   // 12 mini / 13 mini (also X / XS / 11 Pro, 458/3)
+      '390x844': 460 / 3, '393x852': 460 / 3, '402x874': 460 / 3, // 12–16 / Pro
+      '428x926': 458 / 3, '430x932': 460 / 3, '440x956': 460 / 3, // Max / Plus
+      '414x896': 326 / 2,                   // XR / 11
+      '375x667': 326 / 2, '320x568': 326 / 2, // SE
+    };
+    const ppi = (IS_IOS && IPHONE_PPI[`${w}x${h}`]) || (IS_IOS ? 460 / 3 : 160);
+    document.documentElement.style.setProperty('--mm', `${(ppi / 25.4).toFixed(3)}px`);
+  }
+
   /* --------------------------------------------------------------- boot */
   function boot() {
+    lifeSize();
     fitView();
     // Vertical layout follows the phone (upright = vertical) until the toggle says otherwise.
     const onTurn = () => { if (state.recording) stopRecording(); fitView(); setLayout(VERTICAL.matches); };
