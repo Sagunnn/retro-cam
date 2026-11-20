@@ -49,26 +49,28 @@
   //   noise     luma grain amplitude        chroma     colour-noise amplitude
   //   ca        red-channel offset in px at the full 1792 width (cheap-lens fringing)
   const FILTERS = [
-    { id: 'y2k', name: 'Y2K', sat: 1.14, contrast: 0.94, lift: 0.055, roll: 0.95,
-      gain: [1.03, 1.0, 0.97], shadow: [-2, 6, 16], high: [12, 4, -8],
-      noise: 13, chroma: 8, bloom: 0.34, vignette: 0.3, ca: 2 },
-    { id: 'warm', name: 'WARM', sat: 0.86, contrast: 0.86, lift: 0.1, roll: 0.93,
-      gain: [1.09, 1.0, 0.84], shadow: [20, 8, -4], high: [14, 6, -16],
-      noise: 15, chroma: 6, bloom: 0.4, vignette: 0.45, ca: 2 },
-    { id: 'ccd', name: 'CCD', sat: 1.24, contrast: 1.08, lift: 0.03, roll: 0.985,
-      gain: [0.93, 1.0, 1.1], shadow: [-6, 8, 20], high: [-8, 4, 16],
-      noise: 11, chroma: 10, bloom: 0.55, vignette: 0.22, ca: 3 },
-    { id: 'bw', name: 'B&W', bw: true, sat: 0, contrast: 1.32, lift: 0.04, roll: 0.97,
+    // the default look: hazy, washed-out early-2000s digicam (lifted shadows, blown soft highlights)
+    { id: 'y2k', name: 'Y2K', exposure: 1.1, sat: 0.94, contrast: 0.8, lift: 0.075, roll: 0.97,
+      gain: [1.03, 1.0, 0.98], shadow: [8, 2, 12], high: [8, 6, 0],
+      noise: 9, chroma: 6, bloom: 0.5, vignette: 0.14, ca: 2 },
+    { id: 'warm', name: 'WARM', exposure: 1.06, sat: 0.84, contrast: 0.82, lift: 0.1, roll: 0.95,
+      gain: [1.09, 1.0, 0.85], shadow: [20, 8, -4], high: [12, 6, -14],
+      noise: 10, chroma: 5, bloom: 0.45, vignette: 0.3, ca: 2 },
+    { id: 'ccd', name: 'CCD', exposure: 1.04, sat: 1.12, contrast: 0.98, lift: 0.04, roll: 0.985,
+      gain: [0.94, 1.0, 1.08], shadow: [-4, 6, 18], high: [-6, 4, 12],
+      noise: 9, chroma: 8, bloom: 0.55, vignette: 0.18, ca: 3 },
+    { id: 'bw', name: 'B&W', bw: true, exposure: 1.05, sat: 0, contrast: 1.2, lift: 0.05, roll: 0.97,
       gain: [1, 1, 1], shadow: [0, 0, 0], high: [0, 0, 0],
-      noise: 24, chroma: 0, bloom: 0.3, vignette: 0.4, ca: 0 },
+      noise: 16, chroma: 0, bloom: 0.3, vignette: 0.3, ca: 0 },
   ];
+
   const FRAMES = ['none', 'film', 'instant', 'round'];
   const FRAME_LABEL = { none: 'NO FRAME', film: 'FILM', instant: 'INSTANT', round: 'ROUND' };
 
   const state = {
     color: COLOR_NAMES[store.get('color', 'yellow')] ? store.get('color', 'yellow') : 'yellow',
     filter: Math.min(Math.max(0, store.get('filter', 0) | 0), FILTERS.length - 1),
-    frame: FRAMES.includes(store.get('frame', 'none')) ? store.get('frame', 'none') : 'none',
+    frame: FRAMES.includes(store.get('frame', 'film')) ? store.get('frame', 'film') : 'film',
     date: !!store.get('date', true),
     flash: !!store.get('flash', false),
     muted: !!store.get('muted', false),
@@ -203,7 +205,7 @@
       return knee + span * (1 - Math.exp(-((y - knee) / span) * k)) / (1 - Math.exp(-k));
     };
     for (let v = 0; v < 256; v++) {
-      let y = (v / 255 - 0.5) * f.contrast + 0.5;
+      let y = (Math.min(1.2, (v / 255) * (f.exposure || 1)) - 0.5) * f.contrast + 0.5;
       y = Math.min(1.15, Math.max(0, y));
       y = Math.min(1, shoulder(y)); // soft digital highlight roll-off
       y = f.lift + y * (f.roll - f.lift);
@@ -323,13 +325,13 @@
   }
   const needsTurn = (w, h) => UI_ROTATED.matches && h > w;
 
-  /* ----- seven-segment orange date stamp */
+  /* ----- seven-segment red-orange date stamp */
   const SEGMENTS = {
     0: 'abcdef', 1: 'bc', 2: 'abged', 3: 'abgcd', 4: 'fgbc',
     5: 'afgcd', 6: 'afgedc', 7: 'abc', 8: 'abcdefg', 9: 'abcdfg',
   };
   function digitPaths(ctx, ch, x, y, H) {
-    const W = H * 0.52, gap = H * 0.085;
+    const W = H * 0.5, gap = H * 0.08;
     const P = { TL: [0, 0], TR: [W, 0], ML: [0, H / 2], MR: [W, H / 2], BL: [0, H], BR: [W, H] };
     const S = { a: ['TL', 'TR'], b: ['TR', 'MR'], c: ['MR', 'BR'], d: ['BL', 'BR'], e: ['ML', 'BL'], f: ['TL', 'ML'], g: ['ML', 'MR'] };
     for (const seg of SEGMENTS[ch] || '') {
@@ -339,43 +341,43 @@
       ctx.moveTo(x + p1[0] + ux * gap, y + p1[1] + uy * gap);
       ctx.lineTo(x + p2[0] - ux * gap, y + p2[1] - uy * gap);
     }
-    return W;
   }
   function dateString(d = new Date()) {
     return `${d.getFullYear()} ${pad(d.getMonth() + 1)} ${pad(d.getDate())}`;
   }
-  function drawDateStamp(ctx, rect, text) {
-    const H = Math.max(6, rect.h * 0.064);
-    const W = H * 0.52, adv = W + H * 0.3, space = H * 0.42;
+  // LED-style digits, right-aligned at (xRight, yBottom), digit height H.
+  function drawSegText(ctx, text, xRight, yBottom, H) {
+    const W = H * 0.5, adv = W + H * 0.32, space = H * 0.45;
     let total = 0;
     for (const ch of text) total += ch === ' ' ? space : adv;
-    const x0 = rect.x + rect.w - rect.w * 0.05 - total;
-    const y0 = rect.y + rect.h - rect.h * 0.065 - H;
-    const t = Math.max(1.4, H * 0.16);
+    total -= H * 0.32;
     ctx.save();
-    ctx.translate(x0, y0);
-    ctx.transform(1, 0, -0.1, 1, H * 0.1, 0); // slight italic, like the LED stamps
+    ctx.translate(xRight - total, yBottom - H);
+    ctx.transform(1, 0, -0.08, 1, H * 0.08, 0); // slight italic
     ctx.beginPath();
     let x = 0;
     for (const ch of text) { if (ch === ' ') { x += space; continue; } digitPaths(ctx, ch, x, 0, H); x += adv; }
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.globalCompositeOperation = 'screen';
-    // halo
-    ctx.shadowColor = 'rgba(255, 96, 0, 0.95)';
-    ctx.shadowBlur = H * 0.5;
-    ctx.strokeStyle = 'rgba(255, 112, 16, 0.95)';
-    ctx.lineWidth = t;
+    // glow
+    ctx.shadowColor = 'rgba(255, 60, 20, 0.9)';
+    ctx.shadowBlur = H * 0.45;
+    ctx.strokeStyle = 'rgba(255, 78, 34, 0.95)';
+    ctx.lineWidth = Math.max(1.2, H * 0.13);
     ctx.stroke();
     // hot core
     ctx.shadowBlur = 0;
-    ctx.strokeStyle = 'rgba(255, 196, 120, 0.85)';
-    ctx.lineWidth = t * 0.42;
+    ctx.strokeStyle = 'rgba(255, 170, 130, 0.9)';
+    ctx.lineWidth = Math.max(0.6, H * 0.05);
     ctx.stroke();
     ctx.restore();
   }
+  // Date inside the picture (used when the film border is off).
+  function drawDateStamp(ctx, rect, text) {
+    const H = Math.max(6, rect.h * 0.06);
+    drawSegText(ctx, text, rect.x + rect.w * 0.955, rect.y + rect.h * 0.935, H);
+  }
 
-  /* ----- frames (drawn over the photo edges; returns the visible photo area) */
   function roundRect(ctx, x, y, w, h, r) {
     if (ctx.roundRect) { ctx.roundRect(x, y, w, h, r); return; }
     ctx.moveTo(x + r, y);
@@ -385,47 +387,64 @@
     ctx.arcTo(x, y, x + w, y, r);
     ctx.closePath();
   }
-  function drawFrame(ctx, w, h, frame, frameNo, live) {
-    if (frame === 'film') {
-      const B = h * 0.1, side = w * 0.014;
-      ctx.save();
-      ctx.fillStyle = '#17110a';
-      ctx.fillRect(0, 0, w, B);
-      ctx.fillRect(0, h - B, w, B);
-      ctx.fillRect(0, 0, side, h);
-      ctx.fillRect(w - side, 0, side, h);
-      // rounded inner corners
-      ctx.beginPath();
-      ctx.rect(0, 0, w, h);
-      roundRect(ctx, side, B, w - side * 2, h - B * 2, h * 0.012);
-      ctx.fill('evenodd');
-      // sprocket holes, lit from behind
-      const hw = B * 0.36, hh = B * 0.42, step = B * 0.92;
-      ctx.fillStyle = '#efe2bf';
-      ctx.beginPath();
-      for (let x = step * 0.35; x < w - hw; x += step) {
-        roundRect(ctx, x, B * 0.12, hw, hh, hw * 0.22);
-        roundRect(ctx, x, h - B * 0.12 - hh, hw, hh, hw * 0.22);
-      }
-      ctx.fill();
-      if (live) { ctx.restore(); return { x: side, y: B, w: w - side * 2, h: h - B * 2 }; }
-      // edge print (too small to read on the LCD, so only on saved photos)
-      const fs = Math.max(6, B * 0.22);
-      ctx.fillStyle = '#f2a13a';
-      ctx.font = `700 ${fs}px ui-monospace, Menlo, Consolas, monospace`;
-      ctx.textBaseline = 'middle';
-      const n = frameNo % 36 || 36;
-      const yTop = B * 0.78, yBot = h - B * 0.78;
-      ctx.fillText('RETRO 400', w * 0.06, yTop);
-      ctx.fillText(`${n}`, w * 0.5, yTop);
-      ctx.fillText(`▸ ${n}A`, w * 0.78, yTop);
-      ctx.fillText(`${n}A`, w * 0.2, yBot);
-      ctx.fillText('SAFETY FILM', w * 0.55, yBot);
-      ctx.restore();
-      return { x: side, y: B, w: w - side * 2, h: h - B * 2 };
+
+  /* ----- film border: built AROUND the photo, date printed in the bottom band */
+  function filmBorder(photo, frameNo, date) {
+    const pw = photo.width, ph = photo.height;
+    const side = Math.round(pw * 0.045);
+    const band = Math.round(pw * 0.118);
+    const W = pw + side * 2, H = ph + band * 2;
+    const c = makeCanvas(W, H);
+    const ctx = c.getContext('2d');
+    // base: dark brown film base, slightly uneven
+    const g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, '#2a2119');
+    g.addColorStop(0.5, '#221a13');
+    g.addColorStop(1, '#2b2017');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    // photo window with softly rounded corners
+    ctx.save();
+    ctx.beginPath();
+    roundRect(ctx, side, band, pw, ph, pw * 0.012);
+    ctx.clip();
+    ctx.drawImage(photo, side, band);
+    ctx.restore();
+    // sprocket holes: dark, in a row next to the picture
+    const hw = W * 0.046, hh = band * 0.44, step = W / 14;
+    const yTop = band * 0.4, yBot = band + ph + band * 0.16;
+    ctx.fillStyle = '#060504';
+    ctx.beginPath();
+    for (let i = 0; i < 14; i++) {
+      const x = step * i + (step - hw) / 2;
+      roundRect(ctx, x, yTop, hw, hh, hw * 0.18);
+      roundRect(ctx, x, yBot, hw, hh, hw * 0.18);
     }
+    ctx.fill();
+    // edge print in amber
+    const fs = Math.round(band * 0.26);
+    ctx.fillStyle = '#f0b03c';
+    ctx.textBaseline = 'middle';
+    ctx.font = `800 ${fs}px "Arial Narrow", "Helvetica Neue", Arial, sans-serif`;
+    const n = ((frameNo - 1) % 36) + 1;
+    const prev = n === 1 ? '00' : String(n - 1);
+    const tY = band * 0.2, bY = H - band * 0.2;
+    ctx.textAlign = 'left';
+    ctx.fillText('RETRO', W * 0.035, tY);
+    ctx.fillText(`${prev}A`, W * 0.07, bY);
+    ctx.textAlign = 'center';
+    ctx.fillText(String(n), W * 0.5, tY);
+    ctx.fillText(String(n), W * 0.5, bY);
+    ctx.textAlign = 'right';
+    ctx.fillText('CAM', W * 0.965, tY);
+    if (date) drawSegText(ctx, date, W * 0.965, bY + fs * 0.5, fs * 1.05);
+    return c;
+  }
+
+  /* ----- overlay frames (drawn over the photo edges; returns the visible photo area) */
+  function drawFrame(ctx, w, h, frame) {
     if (frame === 'instant') {
-      const sx = w * 0.05, top = h * 0.06, bottom = h * 0.17;
+      const sx = w * 0.035, top = h * 0.07, bottom = h * 0.17;
       const r = { x: sx, y: top, w: w - sx * 2, h: h - top - bottom };
       ctx.save();
       ctx.beginPath();
@@ -451,24 +470,20 @@
       roundRect(ctx, r.x, r.y, r.w, r.h, rad);
       ctx.fillStyle = '#0b0b0c';
       ctx.fill('evenodd');
-      ctx.beginPath();
-      roundRect(ctx, r.x, r.y, r.w, r.h, rad);
-      ctx.strokeStyle = 'rgba(255,255,255,0.22)';
-      ctx.lineWidth = Math.max(1, h * 0.004);
-      ctx.stroke();
       ctx.restore();
       return r;
     }
     return { x: 0, y: 0, w, h };
   }
 
-  // Full look applied to a canvas that already holds the (cropped) picture.
+  // Live view: colour + grain + bloom; overlay frames; the date only when it lands in the picture.
   function develop(canvas, ctx, opts) {
     const f = FILTERS[opts.filter];
     const w = canvas.width, h = canvas.height;
     processPixels(ctx, w, h, f, w / 1792);
     bloom(canvas, ctx, f.bloom);
-    const rect = drawFrame(ctx, w, h, opts.frame, opts.frameNo, opts.live);
+    if (opts.frame === 'film') return; // film border + date are added around the saved photo
+    const rect = drawFrame(ctx, w, h, opts.frame);
     if (opts.date) drawDateStamp(ctx, rect, dateString(opts.when));
   }
 
@@ -636,9 +651,9 @@
   const SENSOR_W = 768, SENSOR_H = 384;
   const sensor = makeCanvas(SENSOR_W, SENSOR_H);
   const sensorCtx = ctx2d(sensor);
-  const SHARPEN = 0.6;        // in-camera oversharpening → bright halos on edges
-  const CRUNCH_QUALITY = 0.5; // in-camera JPEG → blocks and colour bleed
-  const SAVE_QUALITY = 0.72;  // the file you get
+  const SHARPEN = 0.4;         // in-camera oversharpening → bright halos on edges
+  const CRUNCH_QUALITY = 0.62; // in-camera JPEG → soft blocks and colour bleed
+  const SAVE_QUALITY = 0.78;   // the file you get
 
   // 4-neighbour unsharp mask, applied at sensor resolution so the halos come out thick.
   function sharpen(ctx, w, h, amount) {
@@ -711,19 +726,26 @@
     state.frameNo += 1;
     store.set('frameNo', state.frameNo);
     const when = new Date();
-    const rect = drawFrame(octx, OUT_W, OUT_H, state.frame, state.frameNo, false);
-    if (state.date) drawDateStamp(octx, rect, dateString(when));
+    let final = out;
+    if (state.frame === 'film') {
+      final = filmBorder(out, state.frameNo, state.date ? dateString(when) : '');
+    } else {
+      const rect = drawFrame(octx, OUT_W, OUT_H, state.frame);
+      if (state.date) drawDateStamp(octx, rect, dateString(when));
+    }
     const meta = {
       created: when.getTime(), filter: f.name, frame: state.frame,
       date: state.date, n: state.frameNo,
     };
-    const blob = await canvasToBlob(out, 'image/jpeg', SAVE_QUALITY);
-    const t = makeCanvas(384, 192);
+    const blob = await canvasToBlob(final, 'image/jpeg', SAVE_QUALITY);
+    const th = Math.round((384 * final.height) / final.width);
+    const t = makeCanvas(384, th);
     const tctx = t.getContext('2d');
     tctx.imageSmoothingQuality = 'high';
-    tctx.drawImage(out, 0, 0, 384, 192);
-    const thumb = await canvasToBlob(t, 'image/jpeg', 0.72);
+    tctx.drawImage(final, 0, 0, 384, th);
+    const thumb = await canvasToBlob(t, 'image/jpeg', 0.75);
     out.width = out.height = 1; // free memory early (iOS canvas limits)
+    final.width = final.height = 1;
     return { ...meta, blob, thumb };
   }
 

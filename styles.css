@@ -460,10 +460,11 @@ body[data-color='clear'] .shell {
 @keyframes rise { from { transform: translateY(16px) scale(0.97); opacity: 0; } }
 #reviewImg {
   display: block;
-  /* 2:1, as large as fits next to the 170px side panel */
-  width: min(100cqw - var(--pl) - var(--pr) - 24px - 24px - 14px - 170px, (100cqh - var(--pt) - var(--pb) - 48px) * 2, 720px);
-  aspect-ratio: 2 / 1;
-  object-fit: contain;
+  /* as large as fits next to the 170px side panel, keeping the photo's own shape */
+  width: auto;
+  height: auto;
+  max-width: min(100cqw - var(--pl) - var(--pr) - 24px - 24px - 14px - 170px, 760px);
+  max-height: calc(100cqh - var(--pt) - var(--pb) - 48px);
   border-radius: 10px;
   background: #111;
   -webkit-touch-callout: default; /* long-press → Save to Photos on iOS */
@@ -522,12 +523,12 @@ body[data-color='clear'] .shell {
   -webkit-overflow-scrolling: touch;
 }
 .roll-grid button {
-  aspect-ratio: 2 / 1;
+  aspect-ratio: 3 / 2;
   border-radius: 6px;
   overflow: hidden;
   background: #ddd6c6;
 }
-.roll-grid img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.roll-grid img { width: 100%; height: 100%; object-fit: contain; display: block; background: #1c1712; }
 .roll-empty, .roll-note { text-align: center; font-size: 13px; color: var(--ink-soft); margin: 14px 0 0; }
 .roll-note { font-size: 12px; }
 

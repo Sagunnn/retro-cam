@@ -1,8 +1,13 @@
 # Retro Cam
 
 A pocket Y2K digital camera that runs in the browser and installs like an app.
-Live lo-fi viewfinder, 1.6 MP photos (1792 × 896, 2:1), four looks, an orange
+Live lo-fi viewfinder, 1.6 MP photos (1792 × 896, 2:1), four looks, a red-orange LED
 date stamp, frames, and a film roll that stays on the device.
+
+Photos are developed like a cheap 2000s camera: the picture is processed at ~0.3 MP
+(colour, haze, grain), sharpened and JPEG-compressed in the camera, then enlarged to
+1.6 MP. By default it's wrapped in a film border (sprocket holes, frame numbers, and the
+date in the bottom band), so the saved file is about 1954 × 1318.
 
 Live at **https://retro.sagunpradhan.com.np**
 
@@ -26,7 +31,8 @@ CNAME           custom domain for GitHub Pages
   only work as a shutter in browsers that pass the keys through.
 - **▲ / ▼** change the look: Y2K, Warm, CCD, B&W. You can also swipe across the screen.
 - **▶** opens the film roll. Tap a shot to save it again or delete it.
-- Row under the camera: switch camera, flash, date stamp, frame (none / film / instant / round), sound.
+- Row under the camera: switch camera, flash, date stamp, frame (film border by default, then none /
+  instant / round), sound.
 - The coloured dots change the body: Yellow, Clear, Red, Blue, Black.
 - After each shot: **Save Photo** opens the share sheet on phones (choose *Save Image* to put it
   in Photos). On a computer it downloads the JPEG. **Retake** throws the shot away.
